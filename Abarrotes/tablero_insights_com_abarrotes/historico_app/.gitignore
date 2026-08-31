@@ -1,0 +1,8 @@
+# ty.parquet / ly.parquet superan el limite de 100MB de GitHub y son
+# 100% regenerables corriendo pull_data.py (jala de BigQuery). No se
+# versionan por tamano Y porque son snapshots de datos que quedan
+# obsoletos rapido -- lo que importa versionar es el CODIGO que los
+# genera, no el dato del dia que se corrio.
+*.parquet
+__pycache__/
+*.pyc

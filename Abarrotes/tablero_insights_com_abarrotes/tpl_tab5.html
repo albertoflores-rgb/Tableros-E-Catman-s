@@ -1,0 +1,57 @@
+<p class="section-title mb-1">Histórico Diario 2026 — Categoría / Subcategoría / Ítem</p>
+<p class="text-xs text-gray-500 mb-4">Venta diaria del 2026-01-01 al día de ayer (242 días), categorías Abarrotes (41·43·46·49·53·68). Nivel <strong>Tienda-Ítem</strong> pendiente — 15.3M filas a ese grano no caben en un HTML estático, se está definiendo la arquitectura correcta con Alberto.</p>
+
+<div class="flex flex-wrap gap-4 items-end mb-4">
+  <div>
+    <label class="text-xs text-gray-500 block mb-0.5">Nivel</label>
+    <div class="flex gap-1" id="histLevelBtns">
+      <button data-level="categoria" class="tab-btn active" style="padding:6px 14px;font-size:12px;">Categoría</button>
+      <button data-level="subcategoria" class="tab-btn" style="padding:6px 14px;font-size:12px;">Subcategoría</button>
+      <button data-level="item" class="tab-btn" style="padding:6px 14px;font-size:12px;">Ítem</button>
+    </div>
+  </div>
+  <div>
+    <label class="text-xs text-gray-500 block mb-0.5">Métrica</label>
+    <select id="histMetric" class="filter-select">
+      <option value="pesos" selected>Pesos $</option>
+      <option value="pzas">Piezas</option>
+    </select>
+  </div>
+  <div>
+    <label class="text-xs text-gray-500 block mb-0.5">Canal</label>
+    <select id="histCanal" class="filter-select">
+      <option value="total" selected>Físico + .com</option>
+      <option value="fisico">Solo Físico</option>
+      <option value="com">Solo .com</option>
+    </select>
+  </div>
+  <div id="histCatFilterWrap" style="display:none;">
+    <label class="text-xs text-gray-500 block mb-0.5">Filtrar por Categoría</label>
+    <select id="histCatFilter" class="filter-select"></select>
+  </div>
+  <div id="histSearchWrap" style="display:none;">
+    <label class="text-xs text-gray-500 block mb-0.5">Buscar ítem</label>
+    <input type="text" id="histSearch" class="pill-input" placeholder="ej. NESCAFE, 214464...">
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+  <div class="lg:col-span-3">
+    <div class="chart-wrap card p-3" style="height: 420px;">
+      <canvas id="histChart"></canvas>
+    </div>
+    <div class="overflow-x-auto mt-3">
+      <table class="text-sm w-full border-collapse">
+        <thead><tr>
+          <th class="px-3 py-2 text-left">Entidad</th>
+          <th class="px-3 py-2 text-right">Total periodo (métrica/canal seleccionado)</th>
+        </tr></thead>
+        <tbody id="histSummaryBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="lg:col-span-1">
+    <p class="text-xs text-gray-500 mb-1" id="histPickerHint">Categorías (todas seleccionadas por default):</p>
+    <div id="histPicker" class="border rounded-lg p-2" style="max-height: 460px; overflow-y: auto;"></div>
+  </div>
+</div>

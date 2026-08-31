@@ -1,0 +1,79 @@
+<p class="section-title mb-1">Promos Vigentes — Detalle + Mapeo en Sitio</p>
+<p class="text-xs text-gray-500 mb-4" id="promosDisclaimer"></p>
+
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
+  <div class="card p-3 text-center">
+    <p class="text-xs text-gray-500">Promos Vigentes</p>
+    <p class="text-xl font-bold text-blue-700" id="promoTotal">-</p>
+  </div>
+  <div class="card p-3 text-center">
+    <p class="text-xs text-gray-500">Vistas en algún carrusel</p>
+    <p class="text-xl font-bold kpi-up" id="promoVistos">-</p>
+  </div>
+  <div class="card p-3 text-center">
+    <p class="text-xs text-gray-500">SIN exposición</p>
+    <p class="text-xl font-bold kpi-dn" id="promoNoVistos">-</p>
+  </div>
+  <div class="card p-3 text-center">
+    <p class="text-xs text-gray-500">En Home</p>
+    <p class="text-xl font-bold text-blue-700" id="promoHome">-</p>
+  </div>
+  <div class="card p-3 text-center">
+    <p class="text-xs text-gray-500">Despensa / Socio Negocio</p>
+    <p class="text-xl font-bold text-blue-700" id="promoLPs">-</p>
+  </div>
+</div>
+
+<div class="flex gap-2 mb-3 flex-wrap items-center text-xs">
+  <label>Filtrar exposición:
+    <select id="promoFilter" class="filter-select" onchange="promoRender()">
+      <option value="all">Todos</option>
+      <option value="no_vistos" selected>Solo SIN exposición (oportunidad)</option>
+      <option value="vistos">Solo vistas en algún carrusel</option>
+    </select>
+  </label>
+  <span class="text-gray-400">Columnas YTD/MTD/L7D completas visibles con scroll horizontal →</span>
+</div>
+
+<div class="overflow-x-auto" style="max-height: 560px; overflow-y: auto;">
+  <table class="text-sm w-full border-collapse whitespace-nowrap">
+    <thead><tr>
+      <th class="px-3 py-2 text-left">Item</th>
+      <th class="px-3 py-2 text-left">Categoría</th>
+      <th class="px-3 py-2 text-left">Promo</th>
+      <th class="px-3 py-2 text-right">% Ahorro</th>
+      <th class="px-3 py-2 text-left">Vigente hasta</th>
+      <th class="px-3 py-2 text-center">Inventario</th>
+      <th class="px-3 py-2 text-right">Tiendas c/Inv</th>
+      <th class="px-3 py-2 text-right">Inv. Pzas</th>
+      <th class="px-3 py-2 text-right">Inv. Valor $</th>
+      <th class="px-3 py-2 text-right bg-blue-800">YTD Piso Pzas</th>
+      <th class="px-3 py-2 text-right bg-blue-800">YTD Piso $</th>
+      <th class="px-3 py-2 text-right bg-blue-800">YTD .com Pzas</th>
+      <th class="px-3 py-2 text-right bg-blue-800">YTD .com $</th>
+      <th class="px-3 py-2 text-right bg-blue-800">YTD Crec Piso</th>
+      <th class="px-3 py-2 text-right bg-blue-800">YTD Crec .com</th>
+      <th class="px-3 py-2 text-right bg-blue-800">YTD Share .com</th>
+      <th class="px-3 py-2 text-right bg-blue-900">MTD Piso Pzas</th>
+      <th class="px-3 py-2 text-right bg-blue-900">MTD Piso $</th>
+      <th class="px-3 py-2 text-right bg-blue-900">MTD .com Pzas</th>
+      <th class="px-3 py-2 text-right bg-blue-900">MTD .com $</th>
+      <th class="px-3 py-2 text-right bg-blue-900">MTD Crec Piso</th>
+      <th class="px-3 py-2 text-right bg-blue-900">MTD Crec .com</th>
+      <th class="px-3 py-2 text-right bg-blue-900">MTD Share .com</th>
+      <th class="px-3 py-2 text-right bg-indigo-900">L7D Piso Pzas</th>
+      <th class="px-3 py-2 text-right bg-indigo-900">L7D Piso $</th>
+      <th class="px-3 py-2 text-right bg-indigo-900">L7D .com Pzas</th>
+      <th class="px-3 py-2 text-right bg-indigo-900">L7D .com $</th>
+      <th class="px-3 py-2 text-right bg-indigo-900">L7D Crec Piso</th>
+      <th class="px-3 py-2 text-right bg-indigo-900">L7D Crec .com</th>
+      <th class="px-3 py-2 text-right bg-indigo-900">L7D Share .com</th>
+      <th class="px-3 py-2 text-center">Top L7D Cat</th>
+      <th class="px-3 py-2 text-center">Home</th>
+      <th class="px-3 py-2 text-center">Despensa</th>
+      <th class="px-3 py-2 text-center">Socio Negocio</th>
+    </tr></thead>
+    <tbody id="promoBody"></tbody>
+    <tfoot id="promoFoot" style="position: sticky; bottom: 0;"></tfoot>
+  </table>
+</div>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Histórico Diario 2026 vs 2025 — Abarrotes</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; }
+  .btn { padding: 6px 14px; font-size: 12px; border-radius: 8px; border: 1px solid #d1d5db; cursor: pointer; background: #fff; }
+  .btn.active { background: #0053e2; color: #fff; border-color: #0053e2; }
+  .pill-input, .filter-select { border: 1px solid #d1d5db; border-radius: 8px; padding: 6px 10px; font-size: 12px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; }
+  .growth-pos { color: #16a34a; font-weight: 600; }
+  .growth-neg { color: #dc2626; font-weight: 600; }
+</style>
+</head>
+<body class="bg-gray-50 p-6">
+  <h1 class="text-xl font-bold mb-1">Histórico Diario 2026 vs 2025 — Abarrotes</h1>
+  <p class="text-xs text-gray-500 mb-4">Categorías 41·43·46·49·53·68. Línea sólida = venta 2026 (eje izq.), línea punteada = % crecimiento acumulado vs 2025 (eje der.). El valor de 2025 solo se usa para calcular el crecimiento, no se muestra directo.</p>
+
+  <div class="flex flex-wrap gap-4 items-end mb-4">
+    <div>
+      <label class="text-xs text-gray-500 block mb-0.5">Nivel</label>
+      <div class="flex gap-1" id="levelBtns">
+        <button data-level="categoria" class="btn active">Categoría</button>
+        <button data-level="subcategoria" class="btn">Subcategoría</button>
+        <button data-level="item" class="btn">Ítem</button>
+        <button data-level="tienda_item" class="btn">Tienda-Ítem</button>
+      </div>
+    </div>
+    <div>
+      <label class="text-xs text-gray-500 block mb-0.5">Métrica</label>
+      <select id="metric" class="filter-select">
+        <option value="pesos" selected>Pesos $</option>
+        <option value="pzas">Piezas</option>
+      </select>
+    </div>
+    <div>
+      <label class="text-xs text-gray-500 block mb-0.5">Canal</label>
+      <select id="canal" class="filter-select">
+        <option value="total" selected>Físico + .com</option>
+        <option value="fisico">Solo Físico</option>
+        <option value="com">Solo .com</option>
+      </select>
+    </div>
+    <div id="catFilterWrap" style="display:none;">
+      <label class="text-xs text-gray-500 block mb-0.5">Categoría</label>
+      <select id="catFilter" class="filter-select"></select>
+    </div>
+    <div id="subcatFilterWrap" style="display:none;">
+      <label class="text-xs text-gray-500 block mb-0.5">Subcategoría</label>
+      <select id="subcatFilter" class="filter-select"></select>
+    </div>
+    <div id="searchWrap" style="display:none;">
+      <label class="text-xs text-gray-500 block mb-0.5">Buscar ítem</label>
+      <input type="text" id="search" class="pill-input" placeholder="ej. NESCAFE, 214464...">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+    <div class="lg:col-span-3">
+      <div class="card p-3" style="height: 440px;">
+        <canvas id="chart"></canvas>
+      </div>
+      <div class="overflow-x-auto mt-3">
+        <table class="text-sm w-full border-collapse">
+          <thead><tr>
+            <th class="px-3 py-2 text-left">Entidad</th>
+            <th class="px-3 py-2 text-right">Total 2026</th>
+            <th class="px-3 py-2 text-right">Crecimiento % vs 2025</th>
+          </tr></thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="lg:col-span-1">
+      <div id="itemPickForClubs" style="display:none;" class="mb-3">
+        <p class="text-xs text-gray-500 mb-1">1. Elige UN ítem:</p>
+        <input type="text" id="tiendaItemSearch" class="pill-input w-full mb-2" placeholder="Buscar ítem...">
+        <div id="tiendaItemList" class="border rounded-lg p-2" style="max-height: 180px; overflow-y: auto;"></div>
+      </div>
+      <p class="text-xs text-gray-500 mb-1" id="pickerHint">Categorías (todas seleccionadas por default):</p>
+      <div id="picker" class="border rounded-lg p-2" style="max-height: 400px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
