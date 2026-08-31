@@ -2,6 +2,18 @@
 
 Carpeta para tableros, documentos y recursos relacionados con el departamento de Abarrotes.
 
+## Para usuarios sin conocimientos tecnicos
+
+Descarga y corre **[`DESCARGAR_Y_ABRIR_TABLERO.bat`](./DESCARGAR_Y_ABRIR_TABLERO.bat)**
+(click derecho en GitHub -> "Save link as..." / "Guardar enlace como...").
+No requiere git, ni Python, ni instalar nada -- solo doble-click. El
+script descarga la ultima version del repo directo de GitHub (todo ya
+vive aqui en el .git), la descomprime, y abre el tablero oficial en tu
+navegador. Requiere conexion a internet (VPN o Eagle WiFi de Walmart).
+
+Para refrescar a la version mas nueva en el futuro, solo vuelve a
+correr el mismo .bat.
+
 ## Contenido
 
 ### `tablero_insights_com_abarrotes/`
