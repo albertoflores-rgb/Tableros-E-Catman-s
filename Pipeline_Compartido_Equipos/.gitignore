@@ -1,0 +1,7 @@
+# Caches/artefactos de datos -- se regeneran corriendo los scripts,
+# no se versionan (son grandes, cambian diario, y traen datos de
+# venta/inventario que no tiene caso congelar en el historial de git).
+*.csv
+*.json
+__pycache__/
+*.pyc

@@ -1,0 +1,122 @@
+<!-- ===== INSIGHTS EJECUTIVOS (TOP) ===== -->
+<div class="mb-6 border-l-4 border-blue-600 pl-4">
+  <p class="section-title mb-3">Insights Ejecutivos</p>
+  <div id="insightsTop" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm"></div>
+</div>
+
+<!-- ===== KPI CARDS ===== -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  <div class="card p-4 text-center">
+    <p class="text-xs text-gray-500 mb-1">.com Venta MTD (TY)</p>
+    <p class="text-2xl font-bold text-blue-700" id="kpiComMtd">-</p>
+    <p class="text-xs" id="kpiComMtdGrowth">-</p>
+  </div>
+  <div class="card p-4 text-center">
+    <p class="text-xs text-gray-500 mb-1">.com Tendencia Últimos 7 Días</p>
+    <p class="text-2xl font-bold" id="kpiComL7d">-</p>
+    <p class="text-xs text-gray-400">vs mismos 7 días LY</p>
+  </div>
+  <div class="card p-4 text-center opacity-80">
+    <p class="text-xs text-gray-500 mb-1">Piso/Brick MTD (referencia)</p>
+    <p class="text-2xl font-bold kpi-muted" id="kpiPisoMtd">-</p>
+    <p class="text-xs kpi-muted" id="kpiPisoMtdGrowth">-</p>
+  </div>
+  <div class="card p-4 text-center">
+    <p class="text-xs text-gray-500 mb-1">% Mix .com sobre Total</p>
+    <p class="text-2xl font-bold text-blue-700" id="kpiShareCom">-</p>
+    <p class="text-xs text-gray-400" id="kpiMovers">-</p>
+  </div>
+</div>
+
+<!-- ===== CHARTS ROW ===== -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+  <div class="card p-5">
+    <p class="section-title mb-4">.com — Venta MTD por Categoría (TY vs LY)</p>
+    <div class="chart-wrap"><canvas id="comCatChart"></canvas></div>
+  </div>
+  <div class="card p-5">
+    <p class="section-title mb-4">.com — ¿Se sostiene el crecimiento? MTD vs Últimos 7 Días</p>
+    <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Brick reference chart (secondary, muted) -->
+<div class="card p-5 mb-6">
+  <p class="section-title mb-2 text-gray-500">Referencia Piso/Brick — Venta MTD por Categoría (TY vs LY)</p>
+  <p class="text-xs text-gray-400 mb-4">Solo como contexto — el foco de este tablero es .com.</p>
+  <div class="chart-wrap" style="height:260px"><canvas id="pisoCatChart"></canvas></div>
+</div>
+
+<!-- ===== CATEGORY CARDS ===== -->
+<div class="mb-6">
+  <p class="section-title mb-3">Detalle por Categoría</p>
+  <div id="catCards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+</div>
+
+<!-- ===== AVISO: sin parrilla/promos todavia ===== -->
+<div class="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4 text-sm text-blue-900 rounded">
+  <strong>Nota sobre las tablas de abajo:</strong> __AREA__ todavía no tiene un equivalente de
+  "Parrilla 10+1" ni de histórico de promos vigentes (como sí tiene Abarrotes). Las 3 tablas de
+  "movers" de aquí abajo son <strong>Top 20 por volumen ($)</strong> calculadas directo de BigQuery
+  (crecimiento + inventario), <strong>sin curar por promo vigente</strong> — son una primera señal,
+  no una lista de accionables confirmados. Si __OWNER__ tiene o arma un tracker de promos/parrilla,
+  se puede agregar esa capa de curación después sin rehacer el resto del tablero.
+</div>
+
+<!-- ===== TABLA IMPULSAR ===== -->
+<div class="mb-6 border-l-4 border-red-500 pl-4">
+  <p class="section-title mb-1">Necesitan Impulso en .com (Top 20 por volumen Piso)</p>
+  <p class="text-xs text-gray-500 mb-3">Items con caída de -10% o más en .com MTD, de los de mayor venta en Piso.</p>
+  <div class="overflow-x-auto">
+    <table class="text-sm w-full border-collapse">
+      <thead><tr>
+        <th class="px-3 py-2 text-left">Item</th>
+        <th class="px-3 py-2 text-left">Categoría</th>
+        <th class="px-3 py-2 text-right">Piso MTD</th>
+        <th class="px-3 py-2 text-right">.com MTD</th>
+        <th class="px-3 py-2 text-right">Crec .com MTD</th>
+        <th class="px-3 py-2 text-right">Crec .com L7D</th>
+        <th class="px-3 py-2 text-center">Top L7D en Cat.</th>
+        <th class="px-3 py-2 text-center">Inventario</th>
+      </tr></thead>
+      <tbody id="tblImpulsar"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== TABLA RIESGO ===== -->
+<div class="mb-6 border-l-4 border-yellow-500 pl-4" id="riesgoSection" style="display:none">
+  <p class="section-title mb-1">Riesgo de Quiebre en Items con Momentum .com (Top 20 por volumen Piso)</p>
+  <p class="text-xs text-gray-500 mb-3">Inventario crítico/OOS en items que SÍ están vendiendo en .com — proteger stock para no perder el momentum.</p>
+  <div class="overflow-x-auto">
+    <table class="text-sm w-full border-collapse">
+      <thead><tr>
+        <th class="px-3 py-2 text-left">Item</th>
+        <th class="px-3 py-2 text-left">Categoría</th>
+        <th class="px-3 py-2 text-right">.com MTD</th>
+        <th class="px-3 py-2 text-right">Crec .com MTD</th>
+        <th class="px-3 py-2 text-center">Inventario</th>
+      </tr></thead>
+      <tbody id="tblRiesgo"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== TABLA REPLICAR ===== -->
+<div class="mb-6 border-l-4 border-green-500 pl-4">
+  <p class="section-title mb-1">Replicar Éxito (Top 20 por volumen .com)</p>
+  <p class="text-xs text-gray-500 mb-3">Items con crecimiento .com MTD de +20% o más, de los de mayor venta .com.</p>
+  <div class="overflow-x-auto">
+    <table class="text-sm w-full border-collapse">
+      <thead><tr>
+        <th class="px-3 py-2 text-left">Item</th>
+        <th class="px-3 py-2 text-left">Categoría</th>
+        <th class="px-3 py-2 text-right">.com MTD</th>
+        <th class="px-3 py-2 text-right">Crec .com MTD</th>
+        <th class="px-3 py-2 text-right">Crec .com L7D</th>
+        <th class="px-3 py-2 text-center">Top L7D en Cat.</th>
+      </tr></thead>
+      <tbody id="tblReplicar"></tbody>
+    </table>
+  </div>
+</div>
