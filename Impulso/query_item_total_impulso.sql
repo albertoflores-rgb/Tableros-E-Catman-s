@@ -15,7 +15,7 @@
 -- parametros) para que se pueda copiar y pegar directo en la consola
 -- de BigQuery. Es funcionalmente identico al query parametrizado que
 -- usa la automatizacion (catman_equipos/query_item_total_template.sql
--- con @cat_filter = [1, 19, 28, 40, 48, 52, 55, 58, 51]).
+-- con @cat_filter = [1, 19, 28, 40, 48, 52, 55, 58]).
 -- ============================================================
 
 DECLARE fecha_ayer  DATE   DEFAULT DATE_SUB(CURRENT_DATE('America/Mexico_City'), INTERVAL 1 DAY);
@@ -470,6 +470,6 @@ LEFT JOIN cte_ventas_com_item AS T3
 -- Filtro de categorias: Impulso (Kevin) -- version LITERAL,
 -- generada desde teams_config.py. Para ajustar: edita teams_config.py
 -- y vuelve a correr generate_department_queries.py (no editar aqui).
-WHERE T2.Cat_Nbr IN (1, 19, 28, 40, 48, 52, 55, 58, 51)
+WHERE T2.Cat_Nbr IN (1, 19, 28, 40, 48, 52, 55, 58)
 
 ORDER BY T2.OHQty_Clubes DESC
