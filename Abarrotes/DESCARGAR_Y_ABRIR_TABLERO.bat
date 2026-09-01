@@ -94,6 +94,27 @@ if not defined HTML_FILE (
 echo [4/4] Abriendo el tablero en tu navegador...
 start "" "%HTML_FILE%"
 
+REM --- Tambien abrir la mini-app de Historico Diario, si existe ---
+REM (vive siempre como hermana de la carpeta que contiene el HTML:
+REM  .../tablero_insights_com_abarrotes/historico_app/)
+for %%A in ("%HTML_FILE%") do set "TABLERO_DIR=%%~dpA"
+set "MINI_APP_BAT=%TABLERO_DIR%historico_app\INICIAR_MINI_APP.bat"
+
+if exist "%MINI_APP_BAT%" (
+    echo.
+    echo Tambien se abrira el Historico Diario ^(mini-app avanzada con
+    echo nivel Tienda-Item^) en una ventana aparte.
+    echo   - La primera vez tarda varios minutos y necesita acceso a
+    echo     BigQuery ^(gcloud autenticado, VPN/Eagle WiFi de Walmart^).
+    echo   - Si algo de eso te falta, esa ventana se cerrara mostrando
+    echo     instrucciones -- no afecta al tablero principal de arriba.
+    start "Historico Diario - Mini App" cmd /k call "%MINI_APP_BAT%"
+) else (
+    echo.
+    echo [Aviso] No se encontro la mini-app de Historico Diario junto
+    echo         al tablero -- se omite ese paso.
+)
+
 echo.
 echo ============================================================
 echo   Listo! El tablero ya se abrio en tu navegador.

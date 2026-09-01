@@ -5,14 +5,23 @@ Carpeta para tableros, documentos y recursos relacionados con el departamento de
 ## Para usuarios sin conocimientos tecnicos
 
 Descarga y corre **[`DESCARGAR_Y_ABRIR_TABLERO.bat`](./DESCARGAR_Y_ABRIR_TABLERO.bat)**
-(click derecho en GitHub -> "Save link as..." / "Guardar enlace como...").
-No requiere git, ni Python, ni instalar nada -- solo doble-click. El
-script descarga la ultima version del repo directo de GitHub (todo ya
-vive aqui en el .git), la descomprime, y abre el tablero oficial en tu
-navegador. Requiere conexion a internet (VPN o Eagle WiFi de Walmart).
+(click derecho en GitHub -> "Save link as..." / "Guardar enlace como...",
+o mejor aun: boton verde "Code" -> "Download ZIP", extrae, y corre el
+.bat que ya viene adentro de esta carpeta). No requiere git, ni Python,
+ni instalar nada -- solo doble-click. El script:
 
-Para refrescar a la version mas nueva en el futuro, solo vuelve a
-correr el mismo .bat.
+1. Si no tienes el repo ya extraido junto al `.bat`, lo descarga
+   directo de GitHub (todo ya vive aqui en el `.git`) y lo descomprime.
+2. Abre el **tablero oficial** (HTML estatico) en tu navegador.
+3. Tambien abre el **Historico Diario** (mini-app avanzada, nivel
+   Tienda-Item) en una ventana aparte. Esa parte necesita `uv` y acceso
+   a BigQuery (gcloud autenticado) -- si no los tienes configurados,
+   esa ventana se cierra sola mostrando instrucciones, sin afectar el
+   tablero principal que ya se abrio.
+
+Requiere conexion a internet (VPN o Eagle WiFi de Walmart). Para
+refrescar a la version mas nueva en el futuro, solo vuelve a correr el
+mismo `.bat`.
 
 ## Contenido
 
