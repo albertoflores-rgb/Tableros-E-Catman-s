@@ -194,6 +194,7 @@ cte_inventario_item AS (
   SELECT
     -- ── Ítem ────────────────────────────────────────────────
     b.Old_NBR                                               AS Item_Nbr,
+    b.UPC                                                   AS UPC,
     b.PRIMARY_DESC                                          AS Item_Desc_1,
     b.SECONDARY_DESC                                        AS Item_Desc_2,
     e.DIRECCION                                             AS Direccion,
@@ -258,7 +259,7 @@ cte_inventario_item AS (
   WHERE a.club_nbr not in (5808 , 6269, 6389,7101,7573,7475,8103,8691)
   AND g.tipo_tienda not in("Staff","Ex CA","Cedis Devoluciones","Transpo","WMG","Medimart","Import","Prueba")
 
-  GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
+  GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19
 )
 
 -- ============================================================
@@ -271,7 +272,7 @@ cte_inventario_item AS (
 -- ============================================================
 SELECT
   -- ── Identificadores / dimensiones de Ítem (de T2) ────────
-  T2.Item_Nbr, T2.Item_Desc_1, T2.Item_Desc_2,
+  T2.Item_Nbr, T2.UPC, T2.Item_Desc_1, T2.Item_Desc_2,
   T2.Direccion, T2.Departamento, T2.Cat_Nbr, T2.Cat_Desc,
   T2.Sub_Cat_Nbr, T2.Sub_Cat_Desc, T2.Cat_Sub_Cat,
   T2.Tipo, T2.Status, T2.Proveedor, T2.Vendor_Nbr,
