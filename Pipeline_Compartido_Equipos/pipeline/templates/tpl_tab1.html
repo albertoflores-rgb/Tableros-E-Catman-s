@@ -5,7 +5,7 @@
 </div>
 
 <!-- ===== KPI CARDS ===== -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
   <div class="card p-4 text-center">
     <p class="text-xs text-gray-500 mb-1">.com Venta MTD (TY)</p>
     <p class="text-2xl font-bold text-blue-700" id="kpiComMtd">-</p>
@@ -25,6 +25,12 @@
     <p class="text-xs text-gray-500 mb-1">% Mix .com sobre Total</p>
     <p class="text-2xl font-bold text-blue-700" id="kpiShareCom">-</p>
     <p class="text-xs text-gray-400" id="kpiMovers">-</p>
+  </div>
+  <div class="card p-4 text-center">
+    <p class="text-xs text-gray-500 mb-1">Socios .com (MTD)</p>
+    <p class="text-2xl font-bold text-blue-700" id="kpiSociosMtd">-</p>
+    <p class="text-xs" id="kpiSociosMtdGrowth">-</p>
+    <span class="chip chip-yellow inline-block mt-1" title="Numero de socios distintos que compraron por .com (aproximado: suma por categoria, puede haber traslape si un socio compro en mas de una). Venta Piso/Brick: en construccion, no incluida todavia.">Piso: en construcción</span>
   </div>
 </div>
 
@@ -50,7 +56,9 @@
 <!-- ===== CATEGORY CARDS ===== -->
 <div class="mb-6">
   <p class="section-title mb-3">Detalle por Categoría</p>
+  <p class="text-xs text-gray-400 mb-3">Da click en una tarjeta para ver el detalle de movers de esa categoría.</p>
   <div id="catCards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+  <div id="catExpand" class="card p-5 mt-4" style="display:none"></div>
 </div>
 
 <!-- ===== AVISO: sin parrilla/promos todavia ===== -->

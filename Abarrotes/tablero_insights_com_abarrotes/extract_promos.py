@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """Extrae la hoja Historico de promos (filtrada a Abarrotes) a CSV."""
-import sys, os, csv
+import sys, os, csv, pathlib
 sys.stdout.reconfigure(encoding='utf-8')
 import openpyxl
 
 ABARROTES_CATS = {41, 43, 46, 49, 53, 68}
 
-base = "C:\\Users\\a0f07dn\\OneDrive - Walmart Inc\\W2\\Sam\u00b4s\\E-Catman\\Promos Activas\\Agosto"
+onedrive_root = pathlib.Path(r"C:\Users\a0f07dn\OneDrive - Walmart Inc")
+base = next(onedrive_root.rglob("Promos Activas")) / "Agosto"
 fname = [f for f in os.listdir(base) if f.startswith("Hist")][0]
 path = os.path.join(base, fname)
 print("Leyendo:", path)

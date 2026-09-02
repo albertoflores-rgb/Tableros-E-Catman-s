@@ -46,12 +46,39 @@ def norm(s):
 
 
 # ---------- 1. Leer FCST SEPT 2026 VF Curvas.xlsx ----------
-base = r"C:\Users\a0f07dn\OneDrive - Walmart Inc\W2"
-sams_dir = os.path.join(base, [i for i in os.listdir(base) if i.lower().startswith("sam")][0])
-fcst_path = os.path.join(sams_dir, "E-Catman", "FCST", "FCST SEPT 2026 VF Curvas.xlsx")
-
-wb = openpyxl.load_workbook(fcst_path, data_only=True, read_only=True)
-ws = wb[sheet_name]
+# Este archivo vive HOY en el OneDrive personal de Alberto -- no es una
+# fuente compartida del equipo todavia. En cualquier maquina que no sea
+# la suya esto va a fallar (OneDrive no existe ahi), y eso NO debe
+# tumbar el resto del tablero: Tabs 1 (Resumen ventas+inventario) y 2
+# (Explorador BQ) no dependen de este archivo para nada, solo la pestana
+# 3 (FCST) se queda sin datos con un aviso claro en vez de reventar.
+#
+# OJO: NO hardcodear la ruta completa -- la carpeta intermedia se ha
+# movido antes (de "OneDrive\W2\Sam's\..." a "OneDrive\Seguros
+# 2026\W2\Sam's\..." sin avisar). Se busca el archivo por NOMBRE con
+# rglob desde la raiz del OneDrive, asi sobrevive a que Alberto siga
+# reorganizando carpetas.
+import pathlib
+try:
+    onedrive_root = pathlib.Path(r"C:\Users\a0f07dn\OneDrive - Walmart Inc")
+    fcst_path = next(onedrive_root.rglob("FCST SEPT 2026 VF Curvas.xlsx"))
+    wb = openpyxl.load_workbook(fcst_path, data_only=True, read_only=True)
+    ws = wb[sheet_name]
+except (FileNotFoundError, StopIteration, KeyError) as exc:
+    print(
+        f"[{team_key}] AVISO: no se encontro el archivo FCST ({exc!r}) -- esta maquina "
+        f"probablemente no tiene acceso a esa carpeta de OneDrive. Se omite la pestana 3 "
+        f"(FCST); Tabs 1/2 (ventas e inventario) siguen generandose normal, sin este archivo."
+    )
+    with open(out_dir / 'sept_data.json', 'w', encoding='utf-8') as f:
+        json.dump({
+            'disponible': False,
+            'motivo': (
+                'Archivo FCST SEPT 2026 VF Curvas.xlsx no encontrado en este equipo -- '
+                'vive en el OneDrive de Alberto, todavia no es una fuente compartida.'
+            ),
+        }, f, ensure_ascii=False, indent=2)
+    sys.exit(0)
 
 rows = list(ws.iter_rows(values_only=True))
 header = rows[2]  # fila 3 (0-indexed)
@@ -195,6 +222,7 @@ if kpis['fcst_vobo_total']:
     )
 
 data = {
+    'disponible': True,
     'generated_at': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M'),
     'area': area,
     'kpis': kpis,

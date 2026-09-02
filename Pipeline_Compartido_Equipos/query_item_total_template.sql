@@ -208,6 +208,44 @@ cte_ventas_com_item AS (
 ),
 
 -- ------------------------------------------------------------
+-- CTE 4b: Socios .com por CATEGORIA (grano categoria, no item, no
+--   equipo). Por que a nivel CATEGORIA y no equipo/total: este mismo
+--   .sql corre en 2 modos -- run_query_team.py (1 equipo, @cat_filter
+--   = solo sus categorias) y run_query_combined.py (LOS 6 EQUIPOS
+--   JUNTOS en una sola pasada por costo de BQ, @cat_filter = union de
+--   TODAS las categorias). Si este CTE se agrupara sin GROUP BY (una
+--   sola fila), en el modo combinado esa fila traeria el total de LOS
+--   6 EQUIPOS, y split_by_team.py (que solo filtra filas por Cat_Nbr
+--   EN PANDAS, sin volver a tocar BigQuery) le pegaria ese mismo
+--   numero global a los 6 CSVs por igual -- mal para todos menos por
+--   coincidencia. Agrupando por Cat_Nbr, cada categoria trae su propio
+--   COUNT(DISTINCT) correcto sin importar en que modo se corrio, y
+--   split_by_team.py ya filtra correctamente por Cat_Nbr sin cambios.
+--   NOTA para build_merge.py: al armar el total del EQUIPO hay que
+--   tomar el valor de esta CTE UNA SOLA VEZ POR CATEGORIA (.first() /
+--   drop_duplicates en Cat_Nbr) antes de sumar entre categorias -- si
+--   se sigue teniendo grano item, se vuelve a multiplicar por el
+--   numero de items de la categoria (el bug original). Aun sumando ya
+--   sin ese bug, la suma entre categorias es un APROXIMADO (un socio
+--   que compra en 2 categorias del mismo equipo se cuenta 2 veces) --
+--   por eso el dashboard debe etiquetarlo como aproximado/solo ecom.
+-- ------------------------------------------------------------
+cte_socios_cat AS (
+  SELECT
+    bd.CATEGORY_NBR                                                                                     AS Cat_Nbr_Socios,
+    COUNT(DISTINCT CASE WHEN r.Fecha BETWEEN ytd_ty_ini AND ytd_ty_fin THEN r.Membresia_Nbr END)         AS Socios_Cat_YTD,
+    COUNT(DISTINCT CASE WHEN r.Fecha BETWEEN ytd_ly_ini AND ytd_ly_fin THEN r.Membresia_Nbr END)         AS Socios_Cat_YTDLY,
+    COUNT(DISTINCT CASE WHEN r.Fecha BETWEEN mtd_ty_ini AND mtd_ty_fin THEN r.Membresia_Nbr END)         AS Socios_Cat_MTD,
+    COUNT(DISTINCT CASE WHEN r.Fecha BETWEEN mtd_ly_ini AND mtd_ly_fin THEN r.Membresia_Nbr END)         AS Socios_Cat_MTDLY,
+    COUNT(DISTINCT CASE WHEN r.Fecha BETWEEN l7d_ty_ini AND l7d_ty_fin THEN r.Membresia_Nbr END)         AS Socios_Cat_L7D,
+    COUNT(DISTINCT CASE WHEN r.Fecha BETWEEN l7d_ly_ini AND l7d_ly_fin THEN r.Membresia_Nbr END)         AS Socios_Cat_L7DLY
+  FROM cte_com_raw AS r
+  INNER JOIN `wmt-edw-prod.MX_WC_VM.ITEM_DESC` AS bd ON r.ITEM_NBR = bd.Old_NBR
+  WHERE bd.CATEGORY_NBR IN UNNEST(@cat_filter)
+  GROUP BY bd.CATEGORY_NBR
+),
+
+-- ------------------------------------------------------------
 -- CTE 5: Inventario ÍTEM TOTAL — copiado TAL CUAL de
 --   "SAMS - Inventario Total Item.sql" (misma lógica, mismos
 --   joins, mismos nombres de columna), solo envuelto en CTE.
@@ -308,6 +346,11 @@ SELECT
   T2.Costo_Unit, T2.Precio_Venta,
   T2.OHQty_Clubes_MXN, T2.OHMXN_FC_MX, T2.OHMXN_FC_MTY,
   T2.Semaforo_OH,
+
+  -- ── Socios .com por CATEGORIA (constante dentro de la categoria, SOLO ecom -- ver cte_socios_cat) ──
+  COALESCE(SC.Socios_Cat_YTD, 0) AS Socios_Cat_YTD, COALESCE(SC.Socios_Cat_YTDLY, 0) AS Socios_Cat_YTDLY,
+  COALESCE(SC.Socios_Cat_MTD, 0) AS Socios_Cat_MTD, COALESCE(SC.Socios_Cat_MTDLY, 0) AS Socios_Cat_MTDLY,
+  COALESCE(SC.Socios_Cat_L7D, 0) AS Socios_Cat_L7D, COALESCE(SC.Socios_Cat_L7DLY, 0) AS Socios_Cat_L7DLY,
 
   -- ══ MOMENTO 1: YTD (1-ene -> ayer) ═══════════════════════
   COALESCE(T1.Piso_Pzas_YTD, 0)         AS Piso_Pzas_YTD,
@@ -490,6 +533,8 @@ RIGHT JOIN cte_inventario_item AS T2
   ON  T1.ITEM_NBR = T2.Item_Nbr
 LEFT JOIN cte_ventas_com_item AS T3
   ON  T2.Item_Nbr = T3.ITEM_NBR
+LEFT JOIN cte_socios_cat AS SC
+  ON  T2.Cat_Nbr = SC.Cat_Nbr_Socios
 
 -- ── Filtro de categorias: PARAMETRO, no hardcoded ─────────
 -- Ver teams_config.py para la lista de categorias de cada equipo.

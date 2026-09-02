@@ -18,20 +18,55 @@ lógica de merge/KPIs/movers/FCST es idéntica para los 6 equipos, lo
 único que cambia es el nombre del área, el owner, y qué categorías
 trae — eso vive en un solo lugar (`teams_config.py`).
 
-## Cómo correrlo
+## Cómo correrlo EN TU PROPIA PC (self-service, 02-sep-2026)
 
-Requiere `uv` + acceso a BigQuery (`gcloud auth application-default
-login`) + Python con `pandas`, `google-cloud-bigquery`, `openpyxl`.
+Cada owner de equipo puede correr esto en su propia máquina, sin
+depender de Alberto. Esto es lo que necesitas de verdad, en orden:
+
+### 1. Instalar dependencias (una sola vez)
 
 ```bash
-# 1. Una sola consulta a BigQuery para los 6 equipos (barato: ~19.3GB
-#    en vez de ~116GB si se corriera 1 query por equipo)
+cd Pipeline_Compartido_Equipos
+uv venv
+uv pip install pandas google-cloud-bigquery db-dtypes openpyxl google-cloud-bigquery-storage --index-url https://pypi.ci.artifacts.walmart.com/artifactory/api/pypi/external-pypi/simple --allow-insecure-host pypi.ci.artifacts.walmart.com
+```
+`google-cloud-bigquery-storage` es opcional pero recomendado -- sin él,
+la librería usa el endpoint REST (más lento, pero funciona igual).
+`openpyxl` hay que instalarlo aunque no tengas el archivo de FCST (ver
+punto 4) -- el import truena si falta el paquete, aunque el archivo no
+se use.
+
+### 2. Acceso a BigQuery -- con TU PROPIA cuenta de Walmart
+
+```bash
+gcloud auth application-default login
+```
+Y pide (si no los tienes ya) estos AD groups -- son los que de verdad
+leen las tablas que usa esta query (confirmado contra el ACL real de
+BigQuery, no adivinado):
+
+| Necesitas leer | AD Group a pedir |
+|---|---|
+| `SKU_DLY_POS` y `MDSE_INVENTORY` (venta física + inventario) | `gcp-prod-mx-sams-reader@walmart.com` |
+| `Sams_Ventas` (venta .com) | No tiene AD group abierto en el ACL -- pide acceso directo a `ricardo.bocardo0@walmart.com` (owner del dataset) o abre un ticket ServiceNow "Dataset Access Request" para `wmt-mx-dl-controlledmgzn-prod` / dataset `ecom` |
+
+### 3. Correr el pipeline
+
+```bash
+# 1. Una sola consulta a BigQuery para los 6 equipos (barato: ~18-19GB
+#    en vez de ~116GB si se corriera 1 query por equipo -- OJO: esto
+#    cuesta LO MISMO sin importar si filtras a tu equipo o traes los 6,
+#    porque BigQuery cobra por bytes leidos de las tablas base, no por
+#    filas que sobreviven al filtro de categoria. Si varios owners la
+#    corren cada quien por su lado el mismo dia, es esa misma cuenta de
+#    GB repetida por cada quien -- coordina con Alberto si te preocupa
+#    el costo/tiempo compartido de BQ).
 python run_query_combined.py
 python split_by_team.py
 
-# 2. Pipeline por equipo (o --all para los 6)
+# 2. Pipeline de TU equipo (o --all para los 6)
 cd pipeline
-python run_team_pipeline.py <team_key>
+python run_team_pipeline.py <tu_team_key>
 python run_team_pipeline.py --all
 ```
 
@@ -39,6 +74,18 @@ Cada corrida hace: `build_merge.py` → (`merge_dsv.py` solo en
 Tecnologia/Seasonal/Apparel) → `finalize_data.py` → `finalize_sept.py`
 → `finalize_explorer.py` → `build_dashboard.py`. El HTML final queda en
 la carpeta del equipo correspondiente (ver tabla arriba), NO aquí.
+
+### 4. Sobre la pestaña 3 (FCST Septiembre)
+
+Esa pestaña lee un Excel que hoy vive en el OneDrive **personal** de
+Alberto (`FCST SEPT 2026 VF Curvas.xlsx`) -- todavía no es una fuente
+compartida del equipo. Si corres el pipeline sin acceso a ese archivo,
+**no truena** -- `finalize_sept.py` lo detecta, se salta esa pestaña
+con un aviso claro ("FCST de Septiembre no disponible en este equipo")
+y las pestañas 1 (Resumen, ventas + inventario) y 2 (Explorador BQ) se
+generan normal, con datos completos. Si tu equipo necesita esa pestaña
+funcionando, pídele a Alberto que comparta el archivo (SharePoint/Teams)
+en vez de que viva solo en su OneDrive.
 
 ## Contenido de cada tablero (3 pestañas)
 
