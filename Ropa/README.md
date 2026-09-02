@@ -22,7 +22,8 @@ HTML estatico de 3 pestanas -- Resumen y Movers · Explorador BQ (con Inventario
 no requiere servidor.
 
 Se actualiza automaticamente cada manana via Windows Task Scheduler
-(`rutinas/W5_Tableros_Equipos_Ecatman/` en el workspace local).
+(`rutinas/W5_Tableros_Equipos_Ecatman/` en el workspace local). Publicado en:
+https://puppy.walmart.com/sharing/a0f07dn/tablero-insights-com-apparel
 
 ### Fuente / como regenerarlo
 El codigo fuente (pipeline Python + queries SQL + plantillas HTML) es
