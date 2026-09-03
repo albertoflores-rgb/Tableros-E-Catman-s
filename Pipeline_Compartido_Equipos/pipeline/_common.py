@@ -23,7 +23,7 @@ CATMAN_DIR = PIPELINE_DIR.parent
 WORKSPACE_DIR = CATMAN_DIR.parent
 sys.path.insert(0, str(CATMAN_DIR))
 
-from teams_config import TEAMS  # noqa: E402
+from teams_config import TEAMS, EXTRA_TEAMS  # noqa: E402
 
 
 def team_dir(team_key: str) -> Path:
@@ -33,6 +33,14 @@ def team_dir(team_key: str) -> Path:
 
 
 def get_team_cfg(team_key: str) -> dict:
-    if team_key not in TEAMS:
-        raise SystemExit(f"Team desconocido: {team_key}. Opciones: {list(TEAMS)}")
-    return TEAMS[team_key]
+    # EXTRA_TEAMS (ej. 'total_departamentos') reusa el mismo pipeline
+    # generico que los 6 equipos reales -- ver teams_config.py. No se
+    # incluyen en TEAMS a proposito para que 'run_team_pipeline.py --all'
+    # (y el main.py de W5) sigan procesando SOLO los 6 equipos reales.
+    if team_key in TEAMS:
+        return TEAMS[team_key]
+    if team_key in EXTRA_TEAMS:
+        return EXTRA_TEAMS[team_key]
+    raise SystemExit(
+        f"Team desconocido: {team_key}. Opciones: {list(TEAMS) + list(EXTRA_TEAMS)}"
+    )

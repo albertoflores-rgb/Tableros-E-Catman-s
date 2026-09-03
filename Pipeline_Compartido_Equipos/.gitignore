@@ -6,12 +6,11 @@
 __pycache__/
 *.pyc
 
-# EXCEPCION: el CSV de Total_Departamentos SI se versiona.
-# A diferencia de los raw_bq_item_total_<equipo>.csv (baratos de
-# regenerar, ~19GB combinados para los 6 equipos), este archivo viene
-# de una corrida "todos los departamentos" que costo ~4 TB de BigQuery
-# (bloque de Impresiones Adobe sin particion util). Es el entregable
-# real de descarga del tablero para el lider -- si se ignora, el boton
-# "Descargar CSV completo" del tablero queda roto para cualquiera que
-# clone el repo sin volver a pagar ese costo. Ver Total_Departamentos/README.md.
-!Total_Departamentos/raw_bq_item_total_todos_deptos.csv
+# EXCEPCION: el CSV de Total_Departamentos SI se versiona (via Git
+# LFS -- ver .gitattributes). Es el entregable real de descarga del
+# tablero, y a diferencia de los raw_bq_item_total_<equipo>.csv (parte
+# de un query combinado barato, ~16-18GB para TODO el universo
+# incluido este), no tiene caso pedirle a cada quien que reproduzca la
+# corrida solo para tener el CSV completo a la mano. Ver
+# Total_Departamentos/README.md para el historial de costo.
+!Total_Departamentos/raw_bq_item_total_total_departamentos.csv

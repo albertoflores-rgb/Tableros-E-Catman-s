@@ -107,6 +107,41 @@ Abarrotes usa su **propio** pipeline/archivo (`../Abarrotes/`, con
 evento "A la Mexicana" y pestañas de Promos/Histórico) — no se tocó ni
 se unificó con este pipeline compartido.
 
+## 7mo tablero: Total Departamentos (03-sep-2026)
+
+Ademas de los 6 equipos, `run_query_combined.py` pide el universo
+COMPLETO de categorias (76: los 6 equipos + Abarrotes + 5 huerfanas --
+ver `teams_config.py::all_cat_nbrs_universe()`), y `split_by_team.py`
+tambien genera `raw_bq_item_total_total_departamentos.csv`. Esto es
+**gratis**: confirmado con `bq --dry_run` que 76 categorias cuestan
+EXACTAMENTE LO MISMO que 66 (el costo lo domina el escaneo completo de
+las tablas base, no el filtro).
+
+Para generar el 7mo tablero (despues de correr run_query_combined.py +
+split_by_team.py):
+```bash
+python build_total_departamentos.py
+```
+Mismo pipeline generico (`pipeline/run_team_pipeline.py total_departamentos`),
+sin DSV y sin pestana 3 (FCST) -- ver `Total_Departamentos/README.md`
+para el detalle completo, incluyendo por que esto reemplaza a la
+version ad-hoc anterior que costaba ~3.8 TB por corrida.
+
+## Chequeo de integridad (03-sep-2026)
+
+`validate_integrity.py` compara la venta .com de ayer contra el
+promedio de los 7 dias anteriores para todo el universo -- alerta (sin
+bloquear el pipeline) si cae por debajo de 30%. Barato: `Sams_Ventas`
+esta particionada por dia, asi que pedir solo 8 dias es economico sin
+importar el tamano del YTD completo. Se corrio para detectar a tiempo
+problemas como la latencia de datos de Sept 1-2 (ver kennel/memoria del
+repo, diagnostico 03-sep-2026).
+```bash
+python validate_integrity.py                 # universo completo, umbral 30%
+python validate_integrity.py --umbral 0.20    # umbral custom
+python validate_integrity.py --cats 41,43,46  # solo ciertas categorias
+```
+
 ## No versionado (`.gitignore`)
 
 `*.csv` y `*.json` (cachés/intermedios regenerables) y `__pycache__/`.

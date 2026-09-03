@@ -25,6 +25,30 @@ cfg = get_team_cfg(team_key)
 area = cfg['area']
 out_dir = team_dir(team_key)
 
+# Pseudo-equipos (ej. 'total_departamentos', ver teams_config.EXTRA_TEAMS)
+# no tienen una sola hoja de FCST propia en el Excel de Alberto -- cada
+# equipo real tiene la suya, pero una vista consolidada de TODOS no
+# corresponde a ninguna hoja individual y sumarlas seria inventar un
+# numero que Alberto no aprobo. Se omite la pestana 3 con un aviso
+# claro (igual patron que cuando el archivo de OneDrive no se encuentra
+# mas abajo) en vez de forzar/adivinar un match.
+if cfg.get('no_fcst'):
+    print(
+        f"[{team_key}] Vista consolidada sin hoja de FCST propia -- se omite la pestana 3 "
+        f"(Tabs 1/2 siguen generandose normal). Ver FCST por equipo en su tablero individual."
+    )
+    with open(out_dir / 'sept_data.json', 'w', encoding='utf-8') as f:
+        json.dump({
+            'disponible': False,
+            'motivo': (
+                'Total Departamentos es una vista consolidada de los 6 equipos de E-Catman + '
+                'Abarrotes -- no existe una sola meta de FCST unificada para septiembre. '
+                'Consulta el FCST de Septiembre en el tablero individual de cada equipo '
+                '(pestana 3) o en el de Abarrotes.'
+            ),
+        }, f, ensure_ascii=False, indent=2)
+    sys.exit(0)
+
 SHEET_MAP = {
     'perecederos': 'Fresh',
     'salud_bienestar': 'Consumibles',

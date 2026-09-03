@@ -1,1 +1,1 @@
-Pipeline_Compartido_Equipos/Total_Departamentos/raw_bq_item_total_todos_deptos.csv filter=lfs diff=lfs merge=lfs -text
+Pipeline_Compartido_Equipos/Total_Departamentos/raw_bq_item_total_total_departamentos.csv filter=lfs diff=lfs merge=lfs -text

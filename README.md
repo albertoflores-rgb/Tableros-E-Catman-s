@@ -18,10 +18,13 @@ abre con doble-click, no requiere servidor ni instalar nada.
 | **Apparel** | [`Ropa/`](./Ropa/) | Dani | Resumen · Explorador BQ (+DSV) · Septiembre FCST y Riesgo |
 | **Tecnología** | [`Tecnologia/`](./Tecnologia/) | Valeria | Resumen · Explorador BQ (+DSV) · Septiembre FCST y Riesgo |
 | **Salud y Bienestar** | [`Salud y Bienestar/`](./Salud%20y%20Bienestar/) | Estef | Resumen · Explorador BQ · Septiembre FCST y Riesgo |
+| **Total Departamentos** (vista consolidada) | [`Pipeline_Compartido_Equipos/Total_Departamentos/`](./Pipeline_Compartido_Equipos/Total_Departamentos/) | Alberto | Resumen · Explorador BQ (154,815 items, 76 categorías) · (sin Septiembre FCST -- no hay una sola meta unificada) |
 
 Todos se actualizan automáticamente cada mañana vía Windows Task
-Scheduler. "+DSV" = trae cruce de inventario con samsdsv.com
-(exclusivo de Mercancías Generales: Tecnología, Seasonal, Apparel).
+Scheduler (Total Departamentos todavía es manual -- ver
+`rutinas/W6_Tableros_Ecatman_Consolidado/` en el workspace principal).
+"+DSV" = trae cruce de inventario con samsdsv.com (exclusivo de
+Mercancías Generales: Tecnología, Seasonal, Apparel).
 
 ## Código fuente
 

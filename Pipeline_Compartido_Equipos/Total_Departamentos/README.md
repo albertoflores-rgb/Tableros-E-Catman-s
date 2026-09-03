@@ -1,74 +1,86 @@
-# Total_Departamentos — Tablero consolidado "todos los deptos"
+# Total_Departamentos — Tablero consolidado "Total Departamentos"
 
-Tablero flat HTML (Tailwind + Chart.js, sin servidor) con el query
-`SAMS - Venta e Inventarios Ecatman - YTD MTD 7Dias TY vs LY (Item
-Total).sql` corrido **sin filtro de categoría** — los 8 departamentos
-de E-Catman en un solo dataset, para revisión del líder.
+Tablero HTML (Tailwind + Chart.js) con el universo COMPLETO de
+categorias de E-Catman: los 6 equipos + Abarrotes + 5 categorias
+"huerfanas" (76 categorias en total, ver `teams_config.py` ->
+`EXTRA_TEAMS['total_departamentos']`). Reemplaza (03-sep-2026) la
+version anterior estatica/hardcodeada -- ver seccion "Historia" abajo.
 
 ## Contenido
 
-- `tablero_total_departamentos.html` — el tablero (KPIs, gráficas por
-  departamento, top 20 items, insights, botón de descarga).
-- `raw_bq_item_total_todos_deptos.csv` — 232,716 filas / 122 columnas,
-  el dataset completo. **SÍ está versionado en git** (excepción
-  explícita en `.gitignore` — ver ahí el por qué).
+- `tablero_insights_com_total_departamentos.html` — el tablero, generado
+  100% por el pipeline generico compartido (`../pipeline/`), MISMAS 3
+  pestanas que los 6 tableros de equipo (Resumen, Explorador BQ,
+  Septiembre FCST -- esta ultima se omite con un aviso claro porque la
+  vista consolidada no tiene una sola hoja de FCST propia, ver
+  `pipeline/finalize_sept.py`).
+- `raw_bq_item_total_total_departamentos.csv` — 154,815 filas, el
+  dataset completo (via Git LFS, ver `.gitattributes`).
 
-## Costo real de esta corrida (IMPORTANTE, léelo antes de repetir esto)
-
-El query completo (venta física + .com + inventario + Impresiones
-Adobe, sin filtro de categoría) escaneó **~3.8 TB reales** en su
-corrida correcta y completa — dominado casi en su totalidad por el
-bloque de Impresiones Adobe (`cte_impresiones_raw`), que lee una tabla
-externa ORC sin partición útil para el filtro de canal (`chnl_txt`).
-El bloque de venta/inventario es fijo en ~19GB sin importar el rango.
-
-**Nota de transparencia sobre la sesión completa:** al construir este
-tablero se detectó — vía `INFORMATION_SCHEMA.JOBS_BY_USER` — que la
-sesión del día sumó **~8 TB** de bytes billed en total, no solo los
-~3.8 TB de la corrida final. Esto pasó porque:
-
-1. El primer intento de traer los resultados chocó con un límite de
-   `max_results=10000` de la herramienta usada, así que el CSV inicial
-   quedó truncado (solo 10,000 de 232,765 filas).
-2. Para resolverlo se investigó la tabla temporal de resultados ya
-   materializada por BigQuery (`_anon...` dataset, vive ~24h), pero en
-   el camino se corrieron **dos variantes casi idénticas** del query
-   completo (~3.8 TB cada una) antes de confirmar cuál tenía el schema
-   completo (122 columnas: TY + LY + Crecimiento + Impresiones) vs
-   la incompleta (66 columnas, sin LY ni Crecimiento).
-3. El CSV final que queda en este repo viene de la tabla **completa y
-   correcta** (`anon2c34b009...`), leída directamente desde un venv
-   local con `google-cloud-bigquery` — esa lectura final costó solo
-   ~254 MB (tabla ya materializada, no las fuentes), no otro TB.
-
-**Lección para la próxima vez que se corra esto:** si se necesita
-"todos los departamentos" de nuevo, correrlo UNA sola vez, confirmar
-el schema completo ANTES de dar por buena la corrida, y usar
-`to_dataframe()` de `google-cloud-bigquery` directo (sin límites de
-paginación de 10,000 filas) para bajar el resultado sin necesidad de
-tablas temporales de respaldo.
-
-## Recomendación si esto se vuelve recurrente
-
-Si el líder pide refrescar este tablero periódicamente (semanal,
-mensual), **no volver a correr `cte_impresiones_raw` contra la tabla
-fuente de Adobe cada vez** — migrar ese bloque a un histórico
-incremental local (mismo patrón que
-`Abarrotes/tablero_insights_com_abarrotes/historico_app/`), guardando
-solo el día más reciente cada corrida en vez de re-escanear el YTD
-completo. Sin eso, cada refresh de este tablero cuesta ~3.8 TB.
-
-## Cómo se generó (para reproducir)
+## Como se genera (03-sep-2026 en adelante -- pipeline real, no ad-hoc)
 
 ```bash
-# 1. Correr el query completo (~3.8 TB, un solo intento, confirmar
-#    schema antes de dar por bueno el resultado)
-# 2. Bajar resultado con google-cloud-bigquery + to_dataframe(),
-#    sin límites de paginación
-# 3. Guardar CSV con encoding utf-8-sig
-# 4. El HTML lee el CSV solo como link de descarga directa
-#    (<a href="raw_bq_item_total_todos_deptos.csv" download>) --
-#    los KPIs/gráficas/top20 están pre-calculados y embebidos como
-#    JSON estático en el propio HTML (no se re-procesan 232K filas
-#    en el navegador).
+cd Pipeline_Compartido_Equipos
+python run_query_combined.py            # 1 sola pasada BQ, universo completo (76 cats), ~16-18GB
+python split_by_team.py                 # separa CSVs por equipo + total_departamentos (gratis, local)
+python validate_integrity.py            # chequeo no bloqueante: venta .com de ayer vs promedio 7 dias
+python build_total_departamentos.py     # corre pipeline/run_team_pipeline.py total_departamentos
 ```
+
+O con la rutina consolidada (ver `rutinas/W6_Tableros_Ecatman_Consolidado/`
+en el workspace principal, `main.py` hace los 4 pasos + los 6 equipos
+en un solo comando).
+
+## Costo real (comparado con el intento anterior)
+
+**Antes (02-sep-2026, ad-hoc, sin filtro de categoria):** el query
+completo (venta + inventario + Impresiones Adobe) escaneaba ~3.8 TB
+por corrida, dominado por el bloque de Impresiones Adobe.
+
+**Ahora (03-sep-2026, pipeline real):** se reutiliza EXACTAMENTE el
+mismo query combinado que ya corre para los 6 equipos
+(`query_item_total_template.sql`, SIN el bloque de Impresiones Adobe),
+solo que con el filtro `@cat_filter` extendido a las 76 categorias del
+universo completo en vez de 66. Confirmado con `bq --dry_run`: el costo
+es **IDENTICO** (~16-18 GB) sin importar si el filtro trae 66 o 76
+categorias -- el costo lo domina el escaneo completo de las tablas
+base, no el tamano del filtro. Corrida real del 03-sep-2026: **16.26 GB
+billed** para los 7 tableros (6 equipos + Total Departamentos) en una
+sola pasada.
+
+**Ahorro: de ~3.8 TB por refresh a ~16-18 GB compartidos con los otros
+6 tableros (esencialmente gratis, ya se estaba pagando ese query de
+todos modos).**
+
+## Por que ya no tiene boton de descarga de CSV embebido
+
+La version anterior (ad-hoc) incrustaba los KPIs/graficas como JSON
+estatico y ofrecia el CSV como descarga directa porque no habia
+pipeline real detras. La version actual usa el mismo patron que los 6
+tableros de equipo: el Explorador BQ (pestana 2) trae el detalle a
+nivel item embebido y filtrable en el propio HTML (154,815 items) --
+no hace falta un boton de descarga aparte. Si se necesita el CSV crudo
+completo, sigue versionado en este folder via Git LFS.
+
+## Alcance NO incluido en v1 (a proposito)
+
+- **DSV** (Inventario_DSV/DSV_Proveedor/DSV_Costo): solo aplica a
+  Tecnologia/Seasonal/Apparel (ver `merge_dsv.py`) -- no se corre para
+  esta vista consolidada. Los items de esos 3 equipos SI aparecen aqui,
+  pero sin las columnas DSV.
+- **Pestana 3 (Septiembre FCST)**: se omite con un aviso claro -- no
+  existe una sola meta de FCST unificada para "todos los departamentos".
+  Ver el FCST por equipo en su tablero individual.
+
+## Historia (contexto, no reproducir la version vieja)
+
+La primera version de este tablero (02-sep-2026) se genero con un
+query ad-hoc SIN filtro de categoria (para traer "todo" sin tener que
+enumerar categorias) que por accidente arrastro el bloque completo de
+Impresiones Adobe (`cte_impresiones_raw`), disparando el costo a ~3.8
+TB por corrida y ~8 TB en la sesion completa (incluyendo dos intentos
+fallidos por un limite de paginacion). Ver git log de este archivo
+para el detalle completo de esa lección. La version actual (03-sep-2026)
+corrige esto usando el query PARAMETRIZADO ya optimizado del pipeline
+compartido (sin Impresiones Adobe) con un filtro de 76 categorias en
+vez de "sin filtro".

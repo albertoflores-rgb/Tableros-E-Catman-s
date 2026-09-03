@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Separa raw_bq_item_total_catman_combined.csv (ya jalado UNA vez de
-BigQuery por run_query_combined.py) en un CSV por equipo, filtrando
-localmente por Cat_Nbr con pandas -- CERO costo de BigQuery adicional.
+BigQuery por run_query_combined.py, con el universo COMPLETO de
+categorias) en un CSV por equipo + un CSV 'total_departamentos' con
+TODO el universo, filtrando localmente por Cat_Nbr con pandas -- CERO
+costo de BigQuery adicional.
 
 Uso:
     python split_by_team.py
@@ -10,7 +12,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from teams_config import TEAMS
+from teams_config import TEAMS, EXTRA_TEAMS
 
 SCRIPT_DIR = Path(__file__).parent
 COMBINED_CSV = SCRIPT_DIR / "raw_bq_item_total_catman_combined.csv"
@@ -31,6 +33,15 @@ def run() -> None:
         sub.to_csv(out_path, index=False, encoding="utf-8-sig")
         print(f"  {team_key:18s} ({cfg['owner']:10s}): {len(sub):6d} filas -> {out_path.name}")
 
+    # EXTRA_TEAMS (ej. 'total_departamentos') -- mismo patron, cat_nbrs
+    # ya es la union del universo completo (ver teams_config.py).
+    for team_key, cfg in EXTRA_TEAMS.items():
+        sub = df[df["Cat_Nbr"].isin(cfg["cat_nbrs"])]
+        out_path = SCRIPT_DIR / f"raw_bq_item_total_{team_key}.csv"
+        sub.to_csv(out_path, index=False, encoding="utf-8-sig")
+        print(f"  {team_key:18s} ({cfg['owner']:10s}): {len(sub):6d} filas -> {out_path.name}")
+
 
 if __name__ == "__main__":
     run()
+
