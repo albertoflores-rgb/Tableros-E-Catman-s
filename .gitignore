@@ -1,0 +1,11 @@
+# Entornos virtuales (cada mini-app/rutina crea el suyo con `uv venv`)
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Secretos / credenciales locales
+.env
+
+# Logs de servidor local de las mini-apps (no aportan nada versionado)
+*.log

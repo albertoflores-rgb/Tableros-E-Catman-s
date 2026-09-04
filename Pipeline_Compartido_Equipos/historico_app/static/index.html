@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Historico Mensual 2025+2026 -- Todo el Negocio E-Catman</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; }
+  .btn { padding: 6px 14px; font-size: 12px; border-radius: 8px; border: 1px solid #d1d5db; cursor: pointer; background: #fff; }
+  .btn.active { background: #0053e2; color: #fff; border-color: #0053e2; }
+  .pill-input, .filter-select { border: 1px solid #d1d5db; border-radius: 8px; padding: 6px 10px; font-size: 12px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; }
+  .growth-pos { color: #16a34a; font-weight: 600; }
+  .growth-neg { color: #dc2626; font-weight: 600; }
+  #teamSelect { font-weight: 600; }
+</style>
+</head>
+<body class="bg-gray-50 p-6">
+  <h1 class="text-xl font-bold mb-1">Historico Mensual -- Todo el Negocio (76 categorias: 6 equipos + Abarrotes + huerfanas)</h1>
+  <p class="text-xs text-gray-500 mb-4">Linea clara = venta 2025 completo (12 meses, referencia de tendencia del año pasado). Linea fuerte = venta 2026 YTD (se corta en el mes actual). Linea punteada = % crecimiento YoY por mes (eje der.). Usa "Tabla de Datos" para precio/costo/margen/CR YoY/MoM/share .com-piso por item.</p>
+
+  <div class="flex flex-wrap gap-4 items-end mb-4">
+    <div>
+      <label class="text-xs text-gray-500 block mb-0.5">Equipo</label>
+      <select id="teamSelect" class="filter-select"></select>
+    </div>
+    <div>
+      <label class="text-xs text-gray-500 block mb-0.5">Nivel</label>
+      <div class="flex gap-1" id="levelBtns">
+        <button data-level="categoria" class="btn active">Categoría</button>
+        <button data-level="subcategoria" class="btn">Subcategoría</button>
+        <button data-level="item" class="btn">Ítem</button>
+        <button data-level="tienda_item" class="btn">Tienda-Ítem</button>
+      </div>
+    </div>
+    <div>
+      <label class="text-xs text-gray-500 block mb-0.5">Vista</label>
+      <div class="flex gap-1" id="viewBtns">
+        <button data-view="grafica" class="btn active">Gráfica</button>
+        <button data-view="tabla" class="btn">Tabla de Datos</button>
+      </div>
+    </div>
+    <div>
+      <label class="text-xs text-gray-500 block mb-0.5">Métrica</label>
+      <select id="metric" class="filter-select">
+        <option value="pesos" selected>Pesos $</option>
+        <option value="pzas">Piezas</option>
+      </select>
+    </div>
+    <div>
+      <label class="text-xs text-gray-500 block mb-0.5">Canal</label>
+      <select id="canal" class="filter-select">
+        <option value="total" selected>Físico + .com</option>
+        <option value="fisico">Solo Físico</option>
+        <option value="com">Solo .com</option>
+      </select>
+    </div>
+    <div id="catFilterWrap" style="display:none;">
+      <label class="text-xs text-gray-500 block mb-0.5">Categoría</label>
+      <select id="catFilter" class="filter-select"></select>
+    </div>
+    <div id="subcatFilterWrap" style="display:none;">
+      <label class="text-xs text-gray-500 block mb-0.5">Subcategoría</label>
+      <select id="subcatFilter" class="filter-select"></select>
+    </div>
+    <div id="searchWrap" style="display:none;">
+      <label class="text-xs text-gray-500 block mb-0.5">Buscar ítem</label>
+      <input type="text" id="search" class="pill-input" placeholder="ej. NESCAFE, 214464...">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+    <div class="lg:col-span-3">
+      <div id="chartWrap">
+        <div class="card p-3" style="height: 440px;">
+          <canvas id="chart"></canvas>
+        </div>
+        <div class="overflow-x-auto mt-3">
+          <table class="text-sm w-full border-collapse">
+            <thead><tr>
+              <th class="px-3 py-2 text-left">Entidad</th>
+              <th class="px-3 py-2 text-right">Total 2025</th>
+              <th class="px-3 py-2 text-right">Total 2026 YTD</th>
+              <th class="px-3 py-2 text-right">Crecimiento % YTD</th>
+            </tr></thead>
+            <tbody id="summaryBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="tableWrap" style="display:none;">
+        <div class="flex items-center gap-2 mb-2">
+          <label class="text-xs text-gray-500">Entidad para la tabla:</label>
+          <select id="tableEntitySelect" class="filter-select"></select>
+          <span class="text-xs text-gray-400">Precio/Margen/Share por mes -- LY 2025 completo vs YTD 2026 (comparable). Costo Promedio es un snapshot de referencia (no varia por mes).</span>
+        </div>
+        <div class="overflow-x-auto card p-2">
+          <table class="text-xs w-full border-collapse" id="metricsTable">
+            <thead><tr>
+              <th class="px-2 py-1 text-left">Mes</th>
+              <th class="px-2 py-1 text-right">Venta $ LY</th>
+              <th class="px-2 py-1 text-right">Venta $ TY</th>
+              <th class="px-2 py-1 text-right">Venta Pzas LY</th>
+              <th class="px-2 py-1 text-right">Venta Pzas TY</th>
+              <th class="px-2 py-1 text-right">CR% YoY</th>
+              <th class="px-2 py-1 text-right">Tend. MoM</th>
+              <th class="px-2 py-1 text-right">Utilidad TY</th>
+              <th class="px-2 py-1 text-right">Margen TY</th>
+              <th class="px-2 py-1 text-right">Precio Prom LY</th>
+              <th class="px-2 py-1 text-right">Precio Prom TY</th>
+              <th class="px-2 py-1 text-right">Costo Prom</th>
+              <th class="px-2 py-1 text-right">Share .com TY</th>
+            </tr></thead>
+            <tbody id="metricsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="lg:col-span-1">
+      <div id="itemPickForClubs" style="display:none;" class="mb-3">
+        <p class="text-xs text-gray-500 mb-1">1. Elige UN ítem:</p>
+        <input type="text" id="tiendaItemSearch" class="pill-input w-full mb-2" placeholder="Buscar ítem...">
+        <div id="tiendaItemList" class="border rounded-lg p-2" style="max-height: 180px; overflow-y: auto;"></div>
+      </div>
+      <p class="text-xs text-gray-500 mb-1" id="pickerHint">Categorías (todas seleccionadas por default):</p>
+      <div id="picker" class="border rounded-lg p-2" style="max-height: 400px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

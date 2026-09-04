@@ -142,6 +142,27 @@ python validate_integrity.py --umbral 0.20    # umbral custom
 python validate_integrity.py --cats 41,43,46  # solo ciertas categorias
 ```
 
+## Mini-app interactiva: Historico Mensual, Todo el Negocio (03-sep-2026)
+
+`historico_app/` es una app FastAPI + DuckDB **separada e independiente**
+de los 7 tableros HTML estaticos de arriba -- no reemplaza nada, es un
+complemento interactivo (filtros, drill-down por Categoria/Subcategoria/
+Item/Tienda-Item, y una Tabla de Datos con metricas mensuales YTD 2026
+vs LY 2025) para cuando un tablero estatico no alcanza. Cubre las 76
+categorias del negocio completo (mismo universo que Total_Departamentos).
+
+Correr:
+```bash
+cd Pipeline_Compartido_Equipos/historico_app
+.\INICIAR_MINI_APP.bat
+```
+Abre http://127.0.0.1:8421 -- ver `historico_app/README.md` para el
+detalle completo (arquitectura, por que Tienda-Item usa query en vivo,
+costo real de BQ del ultimo refresh, como refrescar los datos, etc.).
+El repo incluye un snapshot de datos (`historico_mensual_combined.parquet`,
+~9 MB) para poder correrla de inmediato sin esperar un pull de BigQuery
+-- refrescalo con `pull_data.py` cuando necesites datos mas recientes.
+
 ## No versionado (`.gitignore`)
 
 `*.csv` y `*.json` (cachés/intermedios regenerables) y `__pycache__/`.
