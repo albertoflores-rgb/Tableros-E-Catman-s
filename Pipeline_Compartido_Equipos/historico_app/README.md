@@ -106,6 +106,34 @@ contra su costo promedio ponderado -- ítems muy distintos entre sí
 pueden generar un "margen ciego" que no representa ningún ítem real.
 Para lectura de margen confiable, usar nivel **Ítem**.
 
+## Dependencias
+
+Todas viven en `requirements.txt` y se instalan solas al correr
+`INICIAR_MINI_APP.bat` (via `uv pip install -r requirements.txt`) --
+no hace falta instalarlas a mano:
+
+| Paquete | Para que se usa |
+|---|---|
+| `fastapi` | Servidor web de la mini-app (endpoints `/api/*`) |
+| `uvicorn` | Corre el servidor FastAPI (`uvicorn app:app --port 8421`) |
+| `duckdb` | Motor de consultas SQL en memoria sobre el `.parquet` local -- responde los 4 niveles (Categoria/Subcategoria/Item) sin volver a tocar BigQuery |
+| `pandas` | Manipulacion de datos en `pull_data.py`/`db.py` |
+| `google-cloud-bigquery` | Cliente para el pull inicial de datos (`pull_data.py`) contra `wmt-intl-cons-mx-users` |
+| `google-cloud-bigquery-storage` | Acelera la descarga de BigQuery 5-10x (sin el, cae al REST endpoint, mucho mas lento) -- ver seccion "Refrescar los datos" |
+| `db-dtypes` | Tipos de columna que BigQuery devuelve (fechas/decimales) legibles por pandas |
+| `pyarrow` | Lectura/escritura del `.parquet` (formato de `historico_mensual_combined.parquet`) |
+
+Requisitos fuera de Python (el `.bat` los valida y avisa si faltan):
+
+- **`uv`** en el PATH (instalado junto con Code Puppy) -- crea el venv
+  dedicado de esta mini-app e instala lo de arriba.
+- **VPN de Walmart o Eagle WiFi** -- el indice de pip
+  (`pypi.ci.artifacts.walmart.com`) solo responde con eso conectado.
+- **`gcloud` autenticado** contra `wmt-intl-cons-mx-users` -- solo
+  hace falta para el pull inicial (`pull_data.py`) y para el nivel
+  Tienda-Item (consulta en vivo); el resto de la app corre 100% local
+  contra el `.parquet` sin volver a tocar BigQuery.
+
 ## Cómo correrla
 
 Doble-click a `INICIAR_MINI_APP.bat` (crea su propio venv, instala
