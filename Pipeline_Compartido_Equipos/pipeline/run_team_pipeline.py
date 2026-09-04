@@ -22,6 +22,8 @@ PYTHON = sys.executable
 STEPS = ['build_merge.py', 'finalize_data.py', 'finalize_sept.py', 'finalize_explorer.py', 'build_dashboard.py']
 DSV_STEP = 'merge_dsv.py'
 TEAMS_WITH_DSV = {'tecnologia', 'seasonal', 'apparel'}
+IMPRESIONES_STEP = 'merge_impresiones.py'
+TEAMS_WITH_IMPRESIONES = {'total_departamentos'}
 
 
 def steps_for(team_key: str):
@@ -30,6 +32,10 @@ def steps_for(team_key: str):
         # DSV debe correr DESPUES de build_merge.py (crea merged_full.csv) y
         # ANTES de finalize_data.py/finalize_explorer.py (lo leen).
         steps.insert(steps.index('finalize_data.py'), DSV_STEP)
+    if team_key in TEAMS_WITH_IMPRESIONES:
+        # Mismo principio que DSV: correr DESPUES de build_merge.py y ANTES
+        # de finalize_data.py/finalize_explorer.py -- ver merge_impresiones.py.
+        steps.insert(steps.index('finalize_data.py'), IMPRESIONES_STEP)
     return steps
 
 

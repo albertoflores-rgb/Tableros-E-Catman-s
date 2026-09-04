@@ -19,6 +19,7 @@ COLUMNS = [
     'Tipo', 'Status', 'Semaforo_OH', 'Top_L7D_Cat',
     'Inv_Pzas_Total', 'Inv_MXN_Total', 'Club_con_Inventario', 'Precio_Venta',
     'Inventario_DSV', 'DSV_Proveedor', 'DSV_Costo',
+    'Impresiones_Adobe',
     'Piso_Pzas_YTD', 'Piso_Pesos_YTD', 'Com_Pzas_YTD', 'Com_Pesos_YTD',
     'Crecimiento_Piso_Pesos_YTD', 'Crecimiento_Com_Pesos_YTD', 'Share_Com_YTD',
     'Piso_Pzas_MTD', 'Piso_Pesos_MTD', 'Com_Pzas_MTD', 'Com_Pesos_MTD',
@@ -42,7 +43,7 @@ FILTER_FIELDS = ['Cat_Desc', 'Sub_Cat_Desc', 'Proveedor', 'Tipo', 'Status', 'Sem
 
 NUMERIC_FIELDS = [c for c in [
     'Top_L7D_Cat', 'Inv_Pzas_Total', 'Inv_MXN_Total', 'Club_con_Inventario', 'Precio_Venta',
-    'Inventario_DSV', 'DSV_Costo',
+    'Inventario_DSV', 'DSV_Costo', 'Impresiones_Adobe',
     'Piso_Pzas_YTD', 'Piso_Pesos_YTD', 'Com_Pzas_YTD', 'Com_Pesos_YTD',
     'Crecimiento_Piso_Pesos_YTD', 'Crecimiento_Com_Pesos_YTD', 'Share_Com_YTD',
     'Piso_Pzas_MTD', 'Piso_Pesos_MTD', 'Com_Pzas_MTD', 'Com_Pesos_MTD',
