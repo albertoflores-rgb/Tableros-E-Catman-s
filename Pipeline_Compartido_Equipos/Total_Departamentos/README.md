@@ -16,6 +16,17 @@ version anterior estatica/hardcodeada -- ver seccion "Historia" abajo.
   `pipeline/finalize_sept.py`).
 - `raw_bq_item_total_total_departamentos.csv` — 154,815 filas, el
   dataset completo (via Git LFS, ver `.gitattributes`).
+- `tablero_total_departamentos_v1_revision.html` — el tablero **V1
+  legado** (ad-hoc, 02-sep-2026, publicado en Puppy Pages con el slug
+  `tablero-total-departamentos`, SIN "-insights-com-"). Se agrego aqui
+  (04-sep-2026) para tener "insights" (la version real, de arriba) y
+  "revision" (esta, el legado con Impresiones Adobe YTD completas) en
+  la MISMA pestana/carpeta de GitHub, uno al lado del otro. Su CSV
+  companion (`raw_bq_item_total_todos_deptos.csv`, 232,716 filas, 122
+  columnas, via Git LFS) sigue viviendo en este folder tambien -- ver
+  `tablero_total_departamentos_v1/README.md` en el workspace principal
+  para el detalle completo de por que existe por separado y como se
+  recupero su CSV sin volver a pagar el costo de ~3.8 TB.
 
 ## Como se genera (03-sep-2026 en adelante -- pipeline real, no ad-hoc)
 

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ecatman .com — Total Departamentos (Consolidado) | Sam's Club MX</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; }
+  .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  thead th { background: #0053e2; color: white; position: sticky; top: 0; z-index: 10; }
+  .chart-wrap { position: relative; height: 340px; }
+  .section-title { color: #0053e2; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; }
+  .chip { border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+  .chip-red { background:#fde8e6; color:#ea1100; }
+  .chip-green { background:#e8f5e1; color:#2a8703; }
+  .chip-gray { background:#eef1f6; color:#5b6675; }
+  .chip-yellow { background:#fff6da; color:#8a6d00; }
+  .btn-download {
+    background: #ffc220; color: #002d5c; font-weight: 800; border-radius: 10px;
+    padding: 14px 28px; font-size: 15px; display: inline-flex; align-items: center; gap: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15); transition: transform .1s ease;
+  }
+  .btn-download:hover { transform: translateY(-1px); background: #ffcd3d; }
+  tbody tr:nth-child(even) { background: #f8fafc; }
+</style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+<!-- ===== HEADER ===== -->
+<div class="mb-6">
+  <div class="flex items-center gap-3 mb-1">
+    <div>
+      <h1 class="text-2xl font-bold text-blue-800">Ecatman .com — Total Departamentos (Consolidado)</h1>
+      <p class="text-gray-500 text-sm">Grano Ítem Total (sin detalle Club) · TODAS las categorías, sin filtro de equipo · YTD/MTD/L7D/L1D TY vs LY + Impresiones en sitio (Adobe) · Sam's Club MX (176 clubs)</p>
+    </div>
+  </div>
+  <div class="flex gap-2 mt-2 flex-wrap">
+    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Query: SAMS - Venta e Inventarios Ecatman - YTD MTD 7Dias TY vs LY (Item Total).sql — v4.3</span>
+    <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full">232,716 items · 8 departamentos + "sin depto"</span>
+    <span class="bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">Generado: 02-sep-2026</span>
+  </div>
+</div>
+
+<!-- ===== KPIs ===== -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+  <div class="card p-4">
+    <p class="text-xs text-gray-500 font-semibold uppercase">Items totales</p>
+    <p class="text-2xl font-bold text-blue-800">232,716</p>
+  </div>
+  <div class="card p-4">
+    <p class="text-xs text-gray-500 font-semibold uppercase">Departamentos</p>
+    <p class="text-2xl font-bold text-blue-800">8 <span class="text-sm text-gray-400 font-normal">+ sin depto</span></p>
+  </div>
+  <div class="card p-4">
+    <p class="text-xs text-gray-500 font-semibold uppercase">Venta Total YTD</p>
+    <p class="text-2xl font-bold text-green-700">$161.0B</p>
+    <p class="text-[11px] text-gray-400">$160,996,011,731.63 MXN</p>
+  </div>
+  <div class="card p-4">
+    <p class="text-xs text-gray-500 font-semibold uppercase">Impresiones YTD (Adobe)</p>
+    <p class="text-2xl font-bold text-blue-800">3.73B</p>
+    <p class="text-[11px] text-gray-400">suma de las 8 áreas, proxy search/browse</p>
+  </div>
+  <div class="card p-4">
+    <p class="text-xs text-gray-500 font-semibold uppercase">Costo BQ (query completo)</p>
+    <p class="text-2xl font-bold text-red-700">~3.8 TB</p>
+    <p class="text-[11px] text-gray-400">bloque Impresiones Adobe, ver nota abajo</p>
+  </div>
+</div>
+
+<!-- ===== DESCARGA CSV ===== -->
+<div class="card p-5 mb-6 flex flex-col md:flex-row items-center justify-between gap-4" style="border-top:4px solid #ffc220;">
+  <div>
+    <p class="section-title mb-1">Descarga completa</p>
+    <p class="text-sm text-gray-600">Las 232,716 filas / 122 columnas (venta física + .com + inventario + impresiones Adobe, TY y LY, los 4 momentos y % de crecimiento) en un solo CSV, listo para Excel/Power BI.</p>
+  </div>
+  <a class="btn-download" href="https://github.com/albertoflores-rgb/Tableros-E-Catman-s/tree/main/Pipeline_Compartido_Equipos/Total_Departamentos" target="_blank" rel="noopener">
+     Ver / descargar CSV completo en GitHub (232,716 filas · 122 columnas · 115.4 MB)
+  </a>
+  <p class="text-[11px] text-gray-400 mt-2">Nota: el archivo vive en GitHub (Git LFS) porque Puppy Pages no aloja archivos companion junto al HTML -- entra a la carpeta y descarga "raw_bq_item_total_todos_deptos.csv" desde ahi (boton "Download raw file" de GitHub).</p>
+</div>
+
+<!-- ===== CHARTS ===== -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <div class="card p-5">
+    <p class="section-title mb-3">Venta Total YTD por Departamento (MXN)</p>
+    <div class="chart-wrap"><canvas id="chartVenta"></canvas></div>
+  </div>
+  <div class="card p-5">
+    <p class="section-title mb-3">Impresiones en sitio YTD por Departamento (Adobe, proxy search/browse)</p>
+    <div class="chart-wrap"><canvas id="chartImpresiones"></canvas></div>
+  </div>
+</div>
+
+<!-- ===== TABLA POR DEPARTAMENTO ===== -->
+<div class="card p-5 mb-6 overflow-x-auto">
+  <p class="section-title mb-3">Desglose por Departamento</p>
+  <table class="w-full text-sm">
+    <thead>
+      <tr>
+        <th class="p-2 text-left rounded-tl-lg">Departamento</th>
+        <th class="p-2 text-right">Items</th>
+        <th class="p-2 text-right">Venta YTD ($)</th>
+        <th class="p-2 text-right">Piezas YTD</th>
+        <th class="p-2 text-right">Impresiones YTD</th>
+        <th class="p-2 text-right rounded-tr-lg">Inventario Piso (pzas)</th>
+      </tr>
+    </thead>
+    <tbody id="tblDeptos"></tbody>
+  </table>
+</div>
+
+<!-- ===== TOP 20 ITEMS ===== -->
+<div class="card p-5 mb-6 overflow-x-auto">
+  <p class="section-title mb-3">Top 20 Items por Venta Total YTD</p>
+  <table class="w-full text-sm">
+    <thead>
+      <tr>
+        <th class="p-2 text-left rounded-tl-lg">Item_Nbr</th>
+        <th class="p-2 text-left">Descripción</th>
+        <th class="p-2 text-left">Departamento</th>
+        <th class="p-2 text-left">Categoría</th>
+        <th class="p-2 text-right">Venta YTD ($)</th>
+        <th class="p-2 text-right">Piezas YTD</th>
+        <th class="p-2 text-right">Impresiones YTD</th>
+        <th class="p-2 text-center rounded-tr-lg">Inventario</th>
+      </tr>
+    </thead>
+    <tbody id="tblTop20"></tbody>
+  </table>
+</div>
+
+<!-- ===== INSIGHTS EJECUTIVOS ===== -->
+<div class="card p-5 mb-8" style="border-top:3px solid #0053e2;">
+  <p class="section-title mb-3">Insights ejecutivos</p>
+  <ul class="text-sm text-gray-700 space-y-2 list-disc pl-5">
+    <li><strong>Salud y Bienestar y Abarrotes lideran la venta YTD</strong> ($38.3B y $37.9B respectivamente), seguidos de cerca por Impulso ($26.7B) — juntos concentran ~64% de la venta total consolidada.</li>
+    <li><strong>El ítem #1 en venta (Azúcar Estándar 25K, $2.53B YTD) tiene 0 Impresiones registradas</strong> en el proxy de Adobe (search/browse) — probablemente vende por presencia física/promociones masivas, no por descubrimiento digital. Vale la pena revisar si está mal etiquetado en Adobe o si de verdad no aparece en listados de búsqueda.</li>
+    <li><strong>"Sin Depto" es el segundo grupo más grande por número de ítems (78,473, ~34% del catálogo)</strong> y su inventario piso suma NEGATIVO (-4.6M piezas) — señal de datos de ajustes/mermas mezclados con ítems sin comprador asignado en el catálogo. Recomendado: auditar aparte, no es un bug de este query, es un tema de calidad de datos del catálogo fuente.</li>
+    <li><strong>Tecnología y Temporada</strong> tienen catálogos grandes (29K+ items cada uno) pero venta YTD proporcionalmente baja vs Abarrotes/Salud y Bienestar — consistente con ser categorías de "long tail" (muchos SKUs, rotación baja por ítem).</li>
+  </ul>
+</div>
+
+<footer class="text-center text-xs text-gray-400 mb-8 space-y-1">
+  <p>Fuente: BigQuery — venta física (SKU_DLY_POS) + venta .com (Sams_Ventas) + inventario (MDSE_INVENTORY) + impresiones en sitio (sams_mx_csd_adobe_event, proxy search/browse).</p>
+  <p><strong>Nota de costo:</strong> esta corrida (sin filtro de categoría, "todos los departamentos") escaneó ~3.8 TB reales en el query que generó este dataset final, dominados por el bloque de Impresiones Adobe (tabla externa ORC sin partición útil para el filtro de canal). El bloque de venta/inventario escala fijo en ~19GB sin importar el rango. <em>Transparencia adicional:</em> durante la construcción de este tablero se corrieron un par de intentos previos de la misma query (uno quedó incompleto por un límite de paginación) que sumaron costo extra a la sesión del día -- el dataset final aquí descargable viene de UN solo query completo y correcto, pero si automatizamos esto a corridas recurrentes, la prioridad #1 es migrar el bloque de Impresiones a un histórico incremental local (mismo patrón que */historico_app/) para no repetir este costo cada vez.</p>
+  <p><strong>Nota de grano:</strong> Impresiones_* son a nivel NACIONAL por ítem (Adobe no trackea por club físico) — no confundir con métricas de venta que sí varían por club en la versión "Club x Ítem" del query.</p>
+  <p>Generado por Code Puppy Tyzon · wmt-intl-cons-mx-users · 02-sep-2026</p>
+</footer>
+
+<script>
+const DEPTOS = [
+  {dep:"SALUD Y BIENESTAR", items:15569, venta:38257207530.72, pzas:195989754, impresiones:750765189, inv:16433971},
+  {dep:"ABARROTES", items:5942, venta:37877101856.35, pzas:213701464, impresiones:601460259, inv:20074215},
+  {dep:"IMPULSO", items:9107, venta:26671675515.80, pzas:196635345, impresiones:539453726, inv:19348849},
+  {dep:"REFRIGERADOS, CONGELADOS Y BEBIDAS", items:2938, venta:20073004539.13, pzas:123873028, impresiones:404330432, inv:6842018},
+  {dep:"PERECEDEROS", items:4951, venta:13557768851.89, pzas:132435408, impresiones:181371681, inv:1378150},
+  {dep:"TECNOLOGIA", items:29091, venta:10142428622.57, pzas:5426398, impresiones:493583569, inv:1362829},
+  {dep:"TEMPORADA", items:29396, venta:7603116244.17, pzas:11064850, impresiones:443677551, inv:2678417},
+  {dep:"ROPA", items:57298, venta:4657156547.80, pzas:13217242, impresiones:319425346, inv:4546800},
+  {dep:"SIN DEPTO (NULL)", items:78473, venta:2156552023.20, pzas:150149892, impresiones:438878, inv:-4637836},
+];
+
+const TOP20 = [
+  {item:"980021170", desc:"25 K AZUCAR ESTANDAR", dep:"ABARROTES", cat:"AZUCAR", venta:2532733858.57, pzas:6004647, imp:0, sem:"OK"},
+  {item:"15902", desc:"3.4KG MAYONESA LIMON", dep:"ABARROTES", cat:"ACEITES, GRANOS & ADEREZOS", venta:1137502843.35, pzas:4305351, imp:2775198, sem:"OK"},
+  {item:"954468", desc:"MM 32R 400H ULT SUA", dep:"SALUD Y BIENESTAR", cat:"PAPEL", venta:1091952114.28, pzas:3748473, imp:4491473, sem:"OK"},
+  {item:"980002446", desc:"REN IND PLUS REN IND", dep:"SIN DEPTO (NULL)", cat:"-", venta:977535958.05, pzas:1035876, imp:0, sem:"OK"},
+  {item:"981000288", desc:"MM 12/1L LECHE DESLA", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:929683772.61, pzas:3338634, imp:2991668, sem:"OK"},
+  {item:"981017658", desc:"MM 45/500 ML AGUA PU", dep:"IMPULSO", cat:"AGUAS Y JUGOS", venta:857113268.26, pzas:7693015, imp:1217583, sem:"OK"},
+  {item:"113369", desc:"2/350G NESCAFE CAFE", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:849663147.97, pzas:2399034, imp:2850069, sem:"OK"},
+  {item:"263093", desc:"40R 180H SOFT COTTON", dep:"SALUD Y BIENESTAR", cat:"PAPEL", venta:774155370.12, pzas:3878832, imp:4131520, sem:"OK"},
+  {item:"981000289", desc:"MM 12/1L LECHE ENTE", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:686516898.61, pzas:2467859, imp:2601396, sem:"OK"},
+  {item:"980030166", desc:"MM 45/500 ML AGUA PU", dep:"IMPULSO", cat:"AGUAS Y JUGOS", venta:650109374.93, pzas:5684635, imp:1715686, sem:"OK"},
+  {item:"45955", desc:"MM POLLO ROSTIZADO", dep:"PERECEDEROS", cat:"CARNES", venta:626916963.54, pzas:6212530, imp:1039270, sem:"OOS"},
+  {item:"930962", desc:"UVA VERDE", dep:"PERECEDEROS", cat:"FRUTAS Y VERDURAS", venta:600266379.19, pzas:4175309, imp:1010660, sem:"OK"},
+  {item:"980007591", desc:"MM 25 FORMULA ORIG", dep:"SALUD Y BIENESTAR", cat:"MASCOTAS", venta:599690584.24, pzas:1149550, imp:1321530, sem:"OK"},
+  {item:"254784", desc:"30 PZ HUEVO BLANCO", dep:"REFRIGERADOS, CONGELADOS Y BEBIDAS", cat:"LACTEOS", venta:564381914.86, pzas:8228324, imp:1351554, sem:"OK"},
+  {item:"981013501", desc:"12/1L LALA DESLAC DE", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:538424311.14, pzas:1918074, imp:3032826, sem:"OK"},
+  {item:"389388", desc:"MM 300G CAFE REGULAR", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:508767480.40, pzas:2535686, imp:2807921, sem:"OK"},
+  {item:"34289", desc:"2.8L AXION LIMON", dep:"SALUD Y BIENESTAR", cat:"LIMPIEZA", venta:501561882.77, pzas:5163756, imp:2769921, sem:"OK"},
+  {item:"980037346", desc:"TT 48R 200H SUAVEL", dep:"SALUD Y BIENESTAR", cat:"PAPEL", venta:500461500.78, pzas:3896214, imp:3242499, sem:"OK"},
+  {item:"36455", desc:"CARNE MOLIDA 90/10", dep:"PERECEDEROS", cat:"CARNES", venta:494959455.19, pzas:2381661, imp:1000403, sem:"OOS"},
+  {item:"980002314", desc:"MM 1K CREMA AVELLANA", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:483191914.52, pzas:4605257, imp:1674076, sem:"OK"},
+];
+
+const fmtMoney = v => `$${v.toLocaleString('es-MX', {maximumFractionDigits:0})}`;
+const fmtNum = v => v.toLocaleString('es-MX');
+const semChip = s => ({'OOS':'chip-red','Crítico (<6)':'chip-red','Bajo (6-20)':'chip-yellow','OK':'chip-green'}[s] || 'chip-gray');
+
+// Tabla Departamentos
+document.getElementById('tblDeptos').innerHTML = DEPTOS.map(d => `
+  <tr class="border-b">
+    <td class="p-2 font-semibold text-gray-700">${d.dep}</td>
+    <td class="p-2 text-right">${fmtNum(d.items)}</td>
+    <td class="p-2 text-right font-semibold text-green-700">${fmtMoney(d.venta)}</td>
+    <td class="p-2 text-right">${fmtNum(d.pzas)}</td>
+    <td class="p-2 text-right">${fmtNum(d.impresiones)}</td>
+    <td class="p-2 text-right ${d.inv < 0 ? 'text-red-600 font-semibold' : ''}">${fmtNum(d.inv)}</td>
+  </tr>
+`).join('');
+
+// Tabla Top 20
+document.getElementById('tblTop20').innerHTML = TOP20.map((r,i) => `
+  <tr class="border-b">
+    <td class="p-2 font-mono text-xs text-gray-500">#${i+1} · ${r.item}</td>
+    <td class="p-2">${r.desc}</td>
+    <td class="p-2 text-xs">${r.dep}</td>
+    <td class="p-2 text-xs text-gray-500">${r.cat}</td>
+    <td class="p-2 text-right font-semibold text-green-700">${fmtMoney(r.venta)}</td>
+    <td class="p-2 text-right">${fmtNum(r.pzas)}</td>
+    <td class="p-2 text-right">${fmtNum(r.imp)}</td>
+    <td class="p-2 text-center"><span class="chip ${semChip(r.sem)}">${r.sem}</span></td>
+  </tr>
+`).join('');
+
+// Chart Venta
+new Chart(document.getElementById('chartVenta'), {
+  type: 'bar',
+  data: {
+    labels: DEPTOS.map(d => d.dep),
+    datasets: [{
+      label: 'Venta Total YTD (MXN)',
+      data: DEPTOS.map(d => d.venta),
+      backgroundColor: '#0053e2',
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: { x: { ticks: { callback: v => `$${(v/1e9).toFixed(1)}B` } } }
+  }
+});
+
+// Chart Impresiones
+new Chart(document.getElementById('chartImpresiones'), {
+  type: 'bar',
+  data: {
+    labels: DEPTOS.map(d => d.dep),
+    datasets: [{
+      label: 'Impresiones YTD',
+      data: DEPTOS.map(d => d.impresiones),
+      backgroundColor: '#ffc220',
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: { x: { ticks: { callback: v => `${(v/1e6).toFixed(0)}M` } } }
+  }
+});
+</script>
+
+</body>
+</html>
