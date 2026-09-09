@@ -1,4 +1,11 @@
-// ===== TAB 4: Septiembre - FCST y Riesgo =====
+// ===== TAB 4: Septiembre - FCST y Riesgo (Abarrotes) =====
+// renderTab4(d) se llama con DATA4_ALL.todos o .sin_baja segun el
+// toggle 'excluir bajas' del header. sept_kw_context vive en
+// DATA4_ALL (no dentro de todos/sin_baja) porque no depende del
+// universo de items -- se pinta una sola vez, fuera de renderTab4.
+
+function renderTab4(DATA4) {
+
 document.getElementById('sept-insights').innerHTML = DATA4.insights_top.map(t =>
   `<div class="flex gap-2 items-start"><p>${t}</p></div>`).join('');
 
@@ -47,6 +54,7 @@ document.getElementById('amx-tbl-cats').innerHTML = amx.categorias.map(c => `
 
 // ---- Chart: FCST vs Estimado de tendencia por categoria ----
 const RISK_COLOR = { 'Alto': '#ea1100', 'Moderado': '#ffc220', 'Bajo': '#2a8703' };
+Chart.getChart('sept-chart')?.destroy();
 new Chart(document.getElementById('sept-chart'), {
   type: 'bar',
   data: {
@@ -113,7 +121,12 @@ document.getElementById('sept-tbl-blanco').innerHTML = DATA4.items.blanco_total.
     <td class="px-3 py-1.5 text-center"><span class="chip ${semColor(r.semaforo)}">${r.semaforo}</span></td>
   </tr>`).join('');
 
-// ---- Chips de contexto: terminos Fiestas Patrias ----
-document.getElementById('sept-kw-chips').innerHTML = DATA4.sept_kw_context.fiestas_26_top.map(([term, n]) =>
+}
+
+// ---- Chips de contexto: terminos Fiestas Patrias (NO depende del
+// toggle 'excluir bajas' -- viene de un reporte de busqueda aparte) ----
+document.getElementById('sept-kw-chips').innerHTML = DATA4_ALL.sept_kw_context.fiestas_26_top.map(([term, n]) =>
   `<span class="chip chip-gray" style="font-size:13px;padding:6px 14px;">${term} <span class="text-gray-400">(${n})</span></span>`
 ).join('');
+
+renderTab4(DATA4_ALL.todos);

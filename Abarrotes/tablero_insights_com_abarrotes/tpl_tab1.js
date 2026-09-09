@@ -1,4 +1,9 @@
-// ===== TAB 1: Resumen y Accionables =====
+// ===== TAB 1: Resumen y Accionables (Abarrotes) =====
+// Envuelto en renderTab1(d) para soportar el toggle 'excluir bajas
+// (Status D)' del header -- mismo patron que catman_equipos/pipeline/
+// templates/tpl_tab1.js.
+
+function renderTab1(DATA1) {
 
 // ---- Insights ----
 document.getElementById('insightsTop').innerHTML = DATA1.insights_top.map(t =>
@@ -15,8 +20,11 @@ document.getElementById('kpiPisoMtd').textContent = fmtM(k1.piso_mtd);
 document.getElementById('kpiPisoMtdGrowth').textContent = fmtPct(k1.piso_mtd_growth) + ' vs LY';
 document.getElementById('kpiShareCom').textContent = fmtPct(k1.share_com_mtd).replace('+','');
 document.getElementById('kpiAccionables').textContent = `${k1.n_accionables} accionables (parrilla+promo) · ${k1.n_impulsar} urgentes · ${k1.n_replicar} éxito`;
+document.getElementById('kpiSociosMtd').textContent = (k1.com_socios_mtd ?? 0).toLocaleString('es-MX');
+document.getElementById('kpiSociosMtdGrowth').innerHTML = (k1.com_socios_mtd_growth == null) ? '<span class="text-gray-400">sin LY</span>' : badge(k1.com_socios_mtd_growth) + ' vs LY';
 
 // ---- Chart: .com por categoria ----
+Chart.getChart('comCatChart')?.destroy();
 new Chart(document.getElementById('comCatChart'), {
   type: 'bar',
   data: {
@@ -34,6 +42,7 @@ new Chart(document.getElementById('comCatChart'), {
 });
 
 // ---- Chart: MTD vs L7D growth ----
+Chart.getChart('trendChart')?.destroy();
 new Chart(document.getElementById('trendChart'), {
   type: 'bar',
   data: {
@@ -51,6 +60,7 @@ new Chart(document.getElementById('trendChart'), {
 });
 
 // ---- Chart: Piso referencia ----
+Chart.getChart('pisoCatChart')?.destroy();
 new Chart(document.getElementById('pisoCatChart'), {
   type: 'bar',
   data: {
@@ -68,6 +78,7 @@ new Chart(document.getElementById('pisoCatChart'), {
 });
 
 // ---- Category cards (clickeables) ----
+window.__catExpandData = DATA1.categoria_items;
 document.getElementById('catCards').innerHTML = DATA1.categorias.map(c => `
   <div class="card cat-card p-4" onclick="toggleCatExpand('${c.cat_desc.replace(/'/g, "\\'")}')">
     <p class="font-bold text-blue-800 mb-1">${c.cat_desc}</p>
@@ -95,51 +106,6 @@ document.getElementById('catCards').innerHTML = DATA1.categorias.map(c => `
     </div>
   </div>`).join('');
 
-function itemMiniRow(r, showPromo) {
-  return `<tr>
-    <td class="px-3 py-1.5"><span class="font-medium">${r.item_desc}</span><br><span class="text-xs text-gray-400">#${r.item_nbr}</span></td>
-    ${showPromo ? `<td class="px-3 py-1.5 text-xs">${r.promo || '—'}</td>` : ''}
-    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(r.com_mtd)}</td>
-    <td class="px-3 py-1.5 text-right">${badge(r.crec_com_mtd)}</td>
-    <td class="px-3 py-1.5 text-right">${badge(r.crec_com_l7d)}</td>
-    <td class="px-3 py-1.5 text-center text-xs">#${r.top_l7d_cat ?? '-'}</td>
-  </tr>`;
-}
-
-let expandedCat = null;
-function toggleCatExpand(catDesc) {
-  const box = document.getElementById('catExpand');
-  if (expandedCat === catDesc) {
-    box.style.display = 'none';
-    expandedCat = null;
-    return;
-  }
-  expandedCat = catDesc;
-  const items = DATA1.categoria_items[catDesc] || { impulsar: [], replicar: [], riesgo: [] };
-  box.style.display = 'block';
-  box.innerHTML = `
-    <p class="section-title mb-3">${catDesc} — detalle completo de accionables</p>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <p class="font-bold text-red-700 mb-2">Impulsar .com (${items.impulsar.length})</p>
-        ${items.impulsar.length === 0 ? '<p class="text-xs text-gray-400">Sin items urgentes en esta categoría.</p>' : `
-        <table class="text-sm w-full border-collapse">
-          <thead><tr class="text-xs"><th class="px-2 py-1 text-left">Item</th><th class="px-2 py-1 text-left">Promo</th><th class="px-2 py-1 text-right">.com MTD</th><th class="px-2 py-1 text-right">Crec MTD</th><th class="px-2 py-1 text-right">Crec L7D</th><th class="px-2 py-1 text-center">Top L7D</th></tr></thead>
-          <tbody>${items.impulsar.map(r => itemMiniRow(r, true)).join('')}</tbody>
-        </table>`}
-      </div>
-      <div>
-        <p class="font-bold text-green-700 mb-2">Replicar éxito (${items.replicar.length})</p>
-        ${items.replicar.length === 0 ? '<p class="text-xs text-gray-400">Sin casos de éxito en parrilla+promo en esta categoría.</p>' : `
-        <table class="text-sm w-full border-collapse">
-          <thead><tr class="text-xs"><th class="px-2 py-1 text-left">Item</th><th class="px-2 py-1 text-left">Promo</th><th class="px-2 py-1 text-right">.com MTD</th><th class="px-2 py-1 text-right">Crec MTD</th><th class="px-2 py-1 text-right">Crec L7D</th><th class="px-2 py-1 text-center">Top L7D</th></tr></thead>
-          <tbody>${items.replicar.map(r => itemMiniRow(r, true)).join('')}</tbody>
-        </table>`}
-      </div>
-    </div>`;
-  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
 // ---- Tabla Impulsar (global) ----
 document.getElementById('tblImpulsar').innerHTML = DATA1.accionables.impulsar.map(r => `
   <tr class="tbl-row-neg">
@@ -156,8 +122,8 @@ document.getElementById('tblImpulsar').innerHTML = DATA1.accionables.impulsar.ma
   </tr>`).join('');
 
 // ---- Tabla Riesgo ----
+document.getElementById('riesgoSection').style.display = DATA1.accionables.riesgo.length > 0 ? 'block' : 'none';
 if (DATA1.accionables.riesgo.length > 0) {
-  document.getElementById('riesgoSection').style.display = 'block';
   document.getElementById('tblRiesgo').innerHTML = DATA1.accionables.riesgo.map(r => `
     <tr class="tbl-row-neg">
       <td class="px-3 py-1.5"><span class="font-medium">${r.item_desc}</span><br><span class="text-xs text-gray-400">#${r.item_nbr}</span></td>
@@ -199,3 +165,57 @@ document.getElementById('recoMonitorear').innerHTML = `
   <li>• ${k1.n_monitorear} items adicionales en parrilla+promo sin señal clara (crecimiento entre -10% y +20%) — sin acción inmediata, solo seguimiento.</li>
   <li>• Piso crece +${(k1.piso_mtd_growth*100).toFixed(1)}% MTD — más lento que .com, consistente con la migración del canal.</li>
 `;
+
+// Cierra cualquier detalle de categoria abierto -- el toggle cambio el
+// universo de items, asi que el detalle viejo ya no aplica.
+document.getElementById('catExpand').style.display = 'none';
+expandedCat = null;
+
+}
+
+function itemMiniRow(r, showPromo) {
+  return `<tr>
+    <td class="px-3 py-1.5"><span class="font-medium">${r.item_desc}</span><br><span class="text-xs text-gray-400">#${r.item_nbr}</span></td>
+    ${showPromo ? `<td class="px-3 py-1.5 text-xs">${r.promo || '—'}</td>` : ''}
+    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(r.com_mtd)}</td>
+    <td class="px-3 py-1.5 text-right">${badge(r.crec_com_mtd)}</td>
+    <td class="px-3 py-1.5 text-right">${badge(r.crec_com_l7d)}</td>
+    <td class="px-3 py-1.5 text-center text-xs">#${r.top_l7d_cat ?? '-'}</td>
+  </tr>`;
+}
+
+let expandedCat = null;
+function toggleCatExpand(catDesc) {
+  const box = document.getElementById('catExpand');
+  if (expandedCat === catDesc) {
+    box.style.display = 'none';
+    expandedCat = null;
+    return;
+  }
+  expandedCat = catDesc;
+  const items = (window.__catExpandData || {})[catDesc] || { impulsar: [], replicar: [], riesgo: [] };
+  box.style.display = 'block';
+  box.innerHTML = `
+    <p class="section-title mb-3">${catDesc} — detalle completo de accionables</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <p class="font-bold text-red-700 mb-2">Impulsar .com (${items.impulsar.length})</p>
+        ${items.impulsar.length === 0 ? '<p class="text-xs text-gray-400">Sin items urgentes en esta categoría.</p>' : `
+        <table class="text-sm w-full border-collapse">
+          <thead><tr class="text-xs"><th class="px-2 py-1 text-left">Item</th><th class="px-2 py-1 text-left">Promo</th><th class="px-2 py-1 text-right">.com MTD</th><th class="px-2 py-1 text-right">Crec MTD</th><th class="px-2 py-1 text-right">Crec L7D</th><th class="px-2 py-1 text-center">Top L7D</th></tr></thead>
+          <tbody>${items.impulsar.map(r => itemMiniRow(r, true)).join('')}</tbody>
+        </table>`}
+      </div>
+      <div>
+        <p class="font-bold text-green-700 mb-2">Replicar éxito (${items.replicar.length})</p>
+        ${items.replicar.length === 0 ? '<p class="text-xs text-gray-400">Sin casos de éxito en parrilla+promo en esta categoría.</p>' : `
+        <table class="text-sm w-full border-collapse">
+          <thead><tr class="text-xs"><th class="px-2 py-1 text-left">Item</th><th class="px-2 py-1 text-left">Promo</th><th class="px-2 py-1 text-right">.com MTD</th><th class="px-2 py-1 text-right">Crec MTD</th><th class="px-2 py-1 text-right">Crec L7D</th><th class="px-2 py-1 text-center">Top L7D</th></tr></thead>
+          <tbody>${items.replicar.map(r => itemMiniRow(r, true)).join('')}</tbody>
+        </table>`}
+      </div>
+    </div>`;
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+renderTab1(DATA1_ALL.todos);

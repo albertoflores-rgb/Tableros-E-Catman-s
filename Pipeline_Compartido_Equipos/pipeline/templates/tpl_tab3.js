@@ -1,9 +1,15 @@
 // ===== TAB 3: Septiembre - FCST y Riesgo (generico) =====
-if (DATA3.disponible === false) {
+// renderTab3(d) se llama con DATA3_ALL.todos o .sin_baja segun el
+// toggle 'excluir bajas' del header (solo si el FCST esta disponible --
+// si no, no hay nada que alternar). Mismo patron que tpl_tab1.js.
+
+if (DATA3_ALL.disponible === false) {
   document.getElementById('tab3-unavailable').style.display = 'block';
-  document.getElementById('tab3-unavailable-motivo').textContent = DATA3.motivo || 'Archivo FCST no encontrado en este equipo.';
+  document.getElementById('tab3-unavailable-motivo').textContent = DATA3_ALL.motivo || 'Archivo FCST no encontrado en este equipo.';
   document.getElementById('tab3-content').style.display = 'none';
 } else {
+
+function renderTab3(DATA3) {
 document.getElementById('sept-insights').innerHTML = DATA3.insights_top.map(t =>
   `<div class="flex gap-2 items-start"><p>${t}</p></div>`).join('');
 
@@ -51,6 +57,7 @@ document.getElementById('amx-tbl-cats').innerHTML = amx3.categorias.map(c => `
   </tr>`).join('');
 
 const RISK_COLOR3 = { 'Alto': '#ea1100', 'Moderado': '#ffc220', 'Bajo': '#2a8703', 'Sin dato': '#9ca3af' };
+Chart.getChart('sept-chart')?.destroy();
 new Chart(document.getElementById('sept-chart'), {
   type: 'bar',
   data: {
@@ -83,4 +90,7 @@ document.getElementById('sept-tbl-cats').innerHTML = DATA3.categorias.map(c => `
     <td class="px-3 py-1.5 text-right">${c.gap_pct != null ? (c.gap_pct >= 0 ? '+' : '') + (c.gap_pct * 100).toFixed(1) + '%' : '-'}</td>
     <td class="px-3 py-1.5 text-center"><span class="chip ${riskChip3(c.risk)}">${c.risk}</span></td>
   </tr>`).join('');
-} // fin del guard DATA3.disponible
+}
+
+renderTab3(DATA3_ALL.todos);
+} // fin del guard DATA3_ALL.disponible

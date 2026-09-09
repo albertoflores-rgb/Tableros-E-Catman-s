@@ -28,21 +28,20 @@ parrilla_set = set(parrilla['Item_Nbr'].astype('int64'))
 # ---------- Merge ----------
 bq['Item_Nbr'] = bq['Item_Nbr'].astype('int64')
 
-# Descartar items de status 'D' (baja/descontinuados) de TODAS las
-# pestanas -- mismo criterio que el pipeline generico de los 6 equipos
-# (peticion de Alberto, 09-sep-2026). Se filtra ANTES del merge con
-# promos/parrilla para que cat_agg/accionables/movers salgan limpios
-# sin repetir el filtro rio abajo.
-n_antes = len(bq)
-bq = bq[bq['Status'] != 'D'].copy()
-print(f"Descartados por Status='D' (baja/descontinuados): {n_antes - len(bq)} de {n_antes}")
+n_baja = int((bq['Status'] == 'D').sum())
+print(f"Items totales Abarrotes (crudo BQ): {len(bq)} (de los cuales {n_baja} son Status='D' / baja)")
+# NO se descartan aqui -- se conservan SIEMPRE en merged_full.csv para que
+# el Explorador BQ (que ya trae 'Status' como filtro multi-select) los
+# pueda mostrar u ocultar bajo demanda. cat_agg/accionables de Resumen y
+# Septiembre SI se calculan por partida doble (ver aggregate() abajo)
+# para ofrecer el mismo toggle 'excluir bajas' ahi (peticion de Alberto,
+# 09-sep-2026: no descartar items, solo dar la OPCION de filtrarlos).
 
 df = bq.merge(vigentes, on='Item_Nbr', how='left')
 df['En_Parrilla'] = df['Item_Nbr'].isin(parrilla_set)
 df['Promo_Vigente'] = df['Promo_Inicio'].notna()
 df['Accionable'] = df['En_Parrilla'] & df['Promo_Vigente']
 
-print("Items totales Abarrotes:", len(df))
 print("En parrilla:", df['En_Parrilla'].sum())
 print("Con promo vigente:", df['Promo_Vigente'].sum())
 print("Accionables (parrilla + promo vigente):", df['Accionable'].sum())
@@ -61,10 +60,9 @@ def clasifica(row):
         return 'Replicar exito'
     return 'Monitorear'
 
-acc = df[df['Accionable']].copy()
-acc['Accion'] = acc.apply(clasifica, axis=1)
-
 # ---------- Metricas derivadas a nivel item: inventario total + share .com vs brick ----------
+# (se calculan UNA sola vez sobre el universo completo -- no dependen de
+# si un item es Status='D' o no, asi que no hace falta duplicarlas)
 df['Inv_Pzas_Total'] = df['OHQty_Clubes'] + df['OHQty_FC_MX'] + df['OHQty_FC_MTY']
 df['Inv_MXN_Total'] = df['OHQty_Clubes_MXN'] + df['OHMXN_FC_MX'] + df['OHMXN_FC_MTY']
 
@@ -73,72 +71,82 @@ for periodo in ('YTD', 'MTD', 'L7D'):
     total = df[com_col] + df[piso_col]
     df[f'Share_Com_{periodo}'] = np.where(total > 0, df[com_col] / total, np.nan)
 
-acc = acc.merge(
-    df[['Item_Nbr', 'Inv_Pzas_Total', 'Inv_MXN_Total', 'Share_Com_YTD', 'Share_Com_MTD', 'Share_Com_L7D']],
-    on='Item_Nbr', how='left',
-)
-
 # ---------- Ranking .com L7D dentro de cada categoria (1 = top vendedor .com ultimos 7 dias) ----------
 df['Top_L7D_Cat'] = (
     df.groupby('Cat_Nbr')['Com_Pesos_L7D']
     .rank(method='first', ascending=False)
     .astype(int)
 )
-acc = acc.merge(df[['Item_Nbr', 'Top_L7D_Cat']], on='Item_Nbr', how='left')
 
-# ---------- Agregado a nivel categoria ----------
+
 def safe_growth(cur, prev):
     prev = prev.replace(0, np.nan)
     return (cur - prev) / prev
 
-cat_agg = df.groupby(['Cat_Nbr', 'Cat_Desc']).agg(
-    Com_Pesos_MTD=('Com_Pesos_MTD', 'sum'),
-    Com_Pesos_MTDLY=('Com_Pesos_MTDLY', 'sum'),
-    Piso_Pesos_MTD=('Piso_Pesos_MTD', 'sum'),
-    Piso_Pesos_MTDLY=('Piso_Pesos_MTDLY', 'sum'),
-    Com_Pesos_L7D=('Com_Pesos_L7D', 'sum'),
-    Com_Pesos_L7DLY=('Com_Pesos_L7DLY', 'sum'),
-    Piso_Pesos_L7D=('Piso_Pesos_L7D', 'sum'),
-    Piso_Pesos_L7DLY=('Piso_Pesos_L7DLY', 'sum'),
-    Ordenes_Com_MTD=('Ordenes_Com_MTD', 'sum'),
-    # Socios_Cat_* ya vienen correctos por categoria desde BigQuery
-    # (COUNT DISTINCT Membresia_Nbr agrupado por Cat_Nbr -- ver
-    # cte_socios_cat en query_item_total_abarrotes.sql). Son constantes
-    # dentro de cada categoria, por eso 'first' y NUNCA 'sum' -- sumar
-    # un COUNT(DISTINCT) ya agregado multiplicaria por el numero de
-    # items de la categoria (ese era el bug original).
-    Socios_Cat_MTD=('Socios_Cat_MTD', 'first'),
-    Socios_Cat_MTDLY=('Socios_Cat_MTDLY', 'first'),
-    Socios_Cat_YTD=('Socios_Cat_YTD', 'first'),
-    Socios_Cat_YTDLY=('Socios_Cat_YTDLY', 'first'),
-    Socios_Cat_L7D=('Socios_Cat_L7D', 'first'),
-    Socios_Cat_L7DLY=('Socios_Cat_L7DLY', 'first'),
-    N_Items=('Item_Nbr', 'nunique'),
-).reset_index()
 
-cat_agg['Crec_Com_MTD'] = safe_growth(cat_agg['Com_Pesos_MTD'], cat_agg['Com_Pesos_MTDLY'])
-cat_agg['Crec_Piso_MTD'] = safe_growth(cat_agg['Piso_Pesos_MTD'], cat_agg['Piso_Pesos_MTDLY'])
-cat_agg['Crec_Com_L7D'] = safe_growth(cat_agg['Com_Pesos_L7D'], cat_agg['Com_Pesos_L7DLY'])
-cat_agg['Crec_Piso_L7D'] = safe_growth(cat_agg['Piso_Pesos_L7D'], cat_agg['Piso_Pesos_L7DLY'])
-cat_agg['Share_Com_MTD'] = cat_agg['Com_Pesos_MTD'] / (cat_agg['Com_Pesos_MTD'] + cat_agg['Piso_Pesos_MTD'])
+def aggregate(frame: pd.DataFrame, suffix: str) -> None:
+    """Calcula accionables_items/cat_agg para un universo de items dado
+    ('' = todos, '_sin_baja' = excluyendo Status='D') -- mismo principio
+    que el pipeline generico de los 6 equipos (ver catman_equipos/
+    pipeline/build_merge.py::aggregate), asi el toggle 'excluir bajas'
+    del dashboard tambien aplica a Resumen y Septiembre en Abarrotes sin
+    reimplementar la logica de clasificacion en JS.
+    """
+    acc = frame[frame['Accionable']].copy()
+    acc['Accion'] = acc.apply(clasifica, axis=1)
+    acc = acc.merge(
+        frame[['Item_Nbr', 'Inv_Pzas_Total', 'Inv_MXN_Total', 'Share_Com_YTD', 'Share_Com_MTD', 'Share_Com_L7D']],
+        on='Item_Nbr', how='left',
+    )
+    acc = acc.merge(frame[['Item_Nbr', 'Top_L7D_Cat']], on='Item_Nbr', how='left')
 
-# accionables count por categoria
-acc_counts = acc.groupby('Cat_Nbr').agg(
-    N_Accionables=('Item_Nbr', 'nunique'),
-    N_Impulsar=('Accion', lambda s: (s == 'Impulsar .com').sum()),
-    N_Riesgo=('Accion', lambda s: (s == 'Riesgo de quiebre').sum()),
-    N_Replicar=('Accion', lambda s: (s == 'Replicar exito').sum()),
-).reset_index()
-cat_agg = cat_agg.merge(acc_counts, on='Cat_Nbr', how='left').fillna(0)
+    cat_agg = frame.groupby(['Cat_Nbr', 'Cat_Desc']).agg(
+        Com_Pesos_MTD=('Com_Pesos_MTD', 'sum'),
+        Com_Pesos_MTDLY=('Com_Pesos_MTDLY', 'sum'),
+        Piso_Pesos_MTD=('Piso_Pesos_MTD', 'sum'),
+        Piso_Pesos_MTDLY=('Piso_Pesos_MTDLY', 'sum'),
+        Com_Pesos_L7D=('Com_Pesos_L7D', 'sum'),
+        Com_Pesos_L7DLY=('Com_Pesos_L7DLY', 'sum'),
+        Piso_Pesos_L7D=('Piso_Pesos_L7D', 'sum'),
+        Piso_Pesos_L7DLY=('Piso_Pesos_L7DLY', 'sum'),
+        Ordenes_Com_MTD=('Ordenes_Com_MTD', 'sum'),
+        # Socios_Cat_* ya vienen correctos por categoria desde BigQuery -- ver
+        # comentario detallado en catman_equipos/pipeline/build_merge.py.
+        # OJO: no cambia entre 'todos' y 'sin_baja' -- limite conocido.
+        Socios_Cat_MTD=('Socios_Cat_MTD', 'first'),
+        Socios_Cat_MTDLY=('Socios_Cat_MTDLY', 'first'),
+        Socios_Cat_YTD=('Socios_Cat_YTD', 'first'),
+        Socios_Cat_YTDLY=('Socios_Cat_YTDLY', 'first'),
+        Socios_Cat_L7D=('Socios_Cat_L7D', 'first'),
+        Socios_Cat_L7DLY=('Socios_Cat_L7DLY', 'first'),
+        N_Items=('Item_Nbr', 'nunique'),
+    ).reset_index()
 
-cat_agg = cat_agg.sort_values('Com_Pesos_MTD', ascending=False)
+    cat_agg['Crec_Com_MTD'] = safe_growth(cat_agg['Com_Pesos_MTD'], cat_agg['Com_Pesos_MTDLY'])
+    cat_agg['Crec_Piso_MTD'] = safe_growth(cat_agg['Piso_Pesos_MTD'], cat_agg['Piso_Pesos_MTDLY'])
+    cat_agg['Crec_Com_L7D'] = safe_growth(cat_agg['Com_Pesos_L7D'], cat_agg['Com_Pesos_L7DLY'])
+    cat_agg['Crec_Piso_L7D'] = safe_growth(cat_agg['Piso_Pesos_L7D'], cat_agg['Piso_Pesos_L7DLY'])
+    cat_agg['Share_Com_MTD'] = cat_agg['Com_Pesos_MTD'] / (cat_agg['Com_Pesos_MTD'] + cat_agg['Piso_Pesos_MTD'])
 
-print("\n=== Categorias ===")
-print(cat_agg[['Cat_Desc', 'Com_Pesos_MTD', 'Crec_Com_MTD', 'Crec_Piso_MTD', 'Crec_Com_L7D', 'N_Accionables']])
+    acc_counts = acc.groupby('Cat_Nbr').agg(
+        N_Accionables=('Item_Nbr', 'nunique'),
+        N_Impulsar=('Accion', lambda s: (s == 'Impulsar .com').sum()),
+        N_Riesgo=('Accion', lambda s: (s == 'Riesgo de quiebre').sum()),
+        N_Replicar=('Accion', lambda s: (s == 'Replicar exito').sum()),
+    ).reset_index()
+    cat_agg = cat_agg.merge(acc_counts, on='Cat_Nbr', how='left').fillna(0)
+    cat_agg = cat_agg.sort_values('Com_Pesos_MTD', ascending=False)
 
-# ---------- Guardar outputs ----------
-cat_agg.to_csv('cat_agg.csv', index=False, encoding='utf-8-sig')
-acc.to_csv('accionables_items.csv', index=False, encoding='utf-8-sig')
+    etiqueta = suffix.lstrip('_') or 'todos'
+    print(f"\n=== Categorias ({etiqueta}) ===")
+    print(cat_agg[['Cat_Desc', 'Com_Pesos_MTD', 'Crec_Com_MTD', 'Crec_Piso_MTD', 'Crec_Com_L7D', 'N_Accionables']])
+
+    cat_agg.to_csv(f'cat_agg{suffix}.csv', index=False, encoding='utf-8-sig')
+    acc.to_csv(f'accionables_items{suffix}.csv', index=False, encoding='utf-8-sig')
+
+
+aggregate(df, '')
+aggregate(df[df['Status'] != 'D'].copy(), '_sin_baja')
+
 df.to_csv('merged_full.csv', index=False, encoding='utf-8-sig')
-
-print("\nGuardado cat_agg.csv, accionables_items.csv, merged_full.csv")
+print("\nGuardado cat_agg.csv (+ _sin_baja), accionables_items.csv (+ _sin_baja), merged_full.csv")

@@ -136,86 +136,15 @@ if missing:
     print(f"[{team_key}] AVISO: categorias sin match en hoja '{sheet_name}': {sorted(missing)}")
 
 # ---------- 2. Crecimiento real YTD/MTD/L7D por categoria (igual que Abarrotes) ----------
+# full/merged_full.csv SIEMPRE trae TODOS los items (incluye Status='D').
+# cat_agg si viene por partida doble desde build_merge.py (sufijo '' =
+# todos, '_sin_baja' = excluye Status='D') -- build() de aqui abajo se
+# llama 2 veces para que el toggle 'excluir bajas' tambien alcance FCST
+# y el evento AMX, no solo Resumen (peticion de Alberto, 09-sep-2026).
 full = pd.read_csv(out_dir / 'merged_full.csv', low_memory=False)
-cat_agg = pd.read_csv(out_dir / 'cat_agg.csv').set_index('Cat_Nbr')
-ytd_cat = full.groupby('Cat_Nbr')[['Com_Pesos_YTD', 'Com_Pesos_YTDLY']].sum()
-
-categorias = []
-for cat_nbr, vals in fcst_by_cat.items():
-    fcst_val, ly_val, fcst_vobo = vals['fcst_sept'], vals['ly_sept'], vals['fcst_vobo']
-    if not fcst_val or not ly_val:
-        continue
-    cat_desc = cat_agg.loc[cat_nbr, 'Cat_Desc'] if cat_nbr in cat_agg.index else f"Cat {cat_nbr}"
-    crec_mtd = cat_agg.loc[cat_nbr, 'Crec_Com_MTD'] if cat_nbr in cat_agg.index else None
-    crec_l7d = cat_agg.loc[cat_nbr, 'Crec_Com_L7D'] if cat_nbr in cat_agg.index else None
-    if cat_nbr in ytd_cat.index:
-        ytdly_val = ytd_cat.loc[cat_nbr, 'Com_Pesos_YTDLY']
-        # Guardia explicita (no solo 'is not None'): con el filtro de
-        # Status='D' (09-sep-2026) es posible que una categoria se quede
-        # con YTDLY exactamente en $0 si todo su historico vivia en items
-        # que hoy estan de baja -- sin esto, 0/0 da NaN (no None) y
-        # contamina silenciosamente trend_total/gap_total del equipo
-        # completo (visto real en Apparel al activar el filtro).
-        if ytdly_val in (0, None) or pd.isna(ytdly_val):
-            crec_ytd = None
-        else:
-            crec_ytd = (ytd_cat.loc[cat_nbr, 'Com_Pesos_YTD'] - ytdly_val) / ytdly_val
-    else:
-        crec_ytd = None
-    com_mtd_actual = cat_agg.loc[cat_nbr, 'Com_Pesos_MTD'] if cat_nbr in cat_agg.index else None
-
-    growth_needed = (fcst_val - ly_val) / ly_val
-    trend_estimate = ly_val * (1 + crec_ytd) if crec_ytd is not None else None
-    gap = (trend_estimate - fcst_val) if trend_estimate is not None else None
-    gap_pct = (gap / fcst_val) if gap is not None else None
-    if gap_pct is None or crec_ytd is None:
-        risk = 'Sin dato'
-    elif crec_ytd < growth_needed - 0.05:
-        risk = 'Alto'
-    elif crec_ytd < growth_needed:
-        risk = 'Moderado'
-    else:
-        risk = 'Bajo'
-
-    categorias.append({
-        'cat_nbr': cat_nbr, 'cat_desc': cat_desc,
-        'fcst_sept': round(fcst_val, 2), 'ly_sept': round(ly_val, 2),
-        'fcst_vobo': (round(fcst_vobo, 2) if fcst_vobo else None),
-        'growth_needed': round(growth_needed, 4),
-        'crec_mtd_actual': (round(float(crec_mtd), 4) if crec_mtd is not None else None),
-        'crec_l7d_actual': (round(float(crec_l7d), 4) if crec_l7d is not None else None),
-        'crec_ytd_actual': (round(float(crec_ytd), 4) if crec_ytd is not None else None),
-        'com_mtd_actual': (round(float(com_mtd_actual), 2) if com_mtd_actual is not None else None),
-        'trend_estimate': (round(trend_estimate, 2) if trend_estimate is not None else None),
-        'gap': (round(gap, 2) if gap is not None else None),
-        'gap_pct': (round(gap_pct, 4) if gap_pct is not None else None),
-        'risk': risk,
-    })
-categorias.sort(key=lambda c: c['fcst_sept'], reverse=True)
-
-fcst_total = sum(c['fcst_sept'] for c in categorias)
-ly_total = sum(c['ly_sept'] for c in categorias)
-fcst_vobo_total = sum(c['fcst_vobo'] for c in categorias if c['fcst_vobo'] is not None) or None
-trend_total = sum(c['trend_estimate'] for c in categorias if c['trend_estimate'] is not None)
 
 with open(out_dir / 'dashboard_data.json', 'r', encoding='utf-8') as f:
-    tab1_kpis = json.load(f)['kpis']
-
-tot_com_ytd = float(full['Com_Pesos_YTD'].sum())
-tot_com_ytdly = float(full['Com_Pesos_YTDLY'].sum())
-crec_ytd_actual_total = (tot_com_ytd - tot_com_ytdly) / tot_com_ytdly
-
-kpis = {
-    'fcst_total': round(fcst_total, 2), 'ly_total': round(ly_total, 2),
-    'fcst_vobo_total': (round(fcst_vobo_total, 2) if fcst_vobo_total else None),
-    'growth_needed_total': round((fcst_total - ly_total) / ly_total, 4),
-    'crec_mtd_actual_total': tab1_kpis['com_mtd_growth'],
-    'crec_l7d_actual_total': tab1_kpis['com_l7d_growth'],
-    'crec_ytd_actual_total': round(crec_ytd_actual_total, 4),
-    'trend_total': round(trend_total, 2),
-    'gap_total': round(trend_total - fcst_total, 2),
-    'gap_pct_total': round((trend_total - fcst_total) / fcst_total, 4),
-}
+    tab1_data = json.load(f)
 
 
 def fmt_pct(x):
@@ -223,54 +152,142 @@ def fmt_pct(x):
     return f"{sign}{x*100:.1f}%"
 
 
-riesgo_alto = [c['cat_desc'] for c in categorias if c['risk'] == 'Alto']
-concentracion_txt = (
-    f"<strong>[Concentracion] El riesgo esta concentrado en {', '.join(riesgo_alto)}</strong> "
-    "&mdash; vienen desacelerando en su tendencia YTD justo cuando el FCST les pide mas crecimiento, no menos."
-) if riesgo_alto else (
-    "<strong>[Concentracion] Ninguna categoria esta en riesgo Alto</strong> con la tendencia YTD actual "
-    "&mdash; el riesgo, si lo hay, es moderado y disperso entre categorias."
-)
+def build(suffix: str) -> dict:
+    frame = full if suffix == '' else full[full['Status'] != 'D']
+    cat_agg = pd.read_csv(out_dir / f'cat_agg{suffix}.csv').set_index('Cat_Nbr')
+    ytd_cat = frame.groupby('Cat_Nbr')[['Com_Pesos_YTD', 'Com_Pesos_YTDLY']].sum()
 
-insights_top = [
-    f"<strong>[FCST] El objetivo de septiembre para {area} es {fmt_pct(kpis['growth_needed_total'])} YoY</strong> vs Sept 2025 "
-    f"(${ly_total/1e6:.1f}M &rarr; ${fcst_total/1e6:.1f}M) &mdash; el YTD real de .com va en {fmt_pct(kpis['crec_ytd_actual_total'])} "
-    f"(la base que usa el estimado de abajo), con un MTD de {fmt_pct(kpis['crec_mtd_actual_total'])} y una ultima semana de {fmt_pct(kpis['crec_l7d_actual_total'])}.",
-    (
-        f"<strong>[Riesgo] Si el ritmo YTD se mantiene</strong>, el estimado de septiembre sale en "
-        f"${kpis['trend_total']/1e6:.1f}M &mdash; un faltante de ${abs(kpis['gap_total'])/1e6:.1f}M ({fmt_pct(kpis['gap_pct_total'])}) vs el target."
-        if kpis['gap_total'] < 0 else
-        f"<strong>[Positivo] Con el ritmo YTD acumulado</strong>, el estimado de tendencia (${kpis['trend_total']/1e6:.1f}M) ya supera el target."
-    ),
-    concentracion_txt,
-]
-if kpis['fcst_vobo_total']:
-    diff_vobo = kpis['trend_total'] - kpis['fcst_vobo_total']
-    insights_top.append(
-        f"<strong>[Referencia] El forecast oficial del equipo central (FCST VoBo)</strong> para {area} es ${kpis['fcst_vobo_total']/1e6:.1f}M "
-        f"&mdash; nuestro estimado basado en tendencia YTD (${kpis['trend_total']/1e6:.1f}M) queda "
-        f"{'por encima' if diff_vobo >= 0 else 'por debajo'} por ${abs(diff_vobo)/1e6:.1f}M."
+    categorias = []
+    for cat_nbr, vals in fcst_by_cat.items():
+        fcst_val, ly_val, fcst_vobo = vals['fcst_sept'], vals['ly_sept'], vals['fcst_vobo']
+        if not fcst_val or not ly_val:
+            continue
+        cat_desc = cat_agg.loc[cat_nbr, 'Cat_Desc'] if cat_nbr in cat_agg.index else f"Cat {cat_nbr}"
+        crec_mtd = cat_agg.loc[cat_nbr, 'Crec_Com_MTD'] if cat_nbr in cat_agg.index else None
+        crec_l7d = cat_agg.loc[cat_nbr, 'Crec_Com_L7D'] if cat_nbr in cat_agg.index else None
+        if cat_nbr in ytd_cat.index:
+            ytdly_val = ytd_cat.loc[cat_nbr, 'Com_Pesos_YTDLY']
+            # Guardia explicita (no solo 'is not None'): la vista 'sin_baja'
+            # puede dejar una categoria con YTDLY exactamente en $0 si todo
+            # su historico vivia en items que hoy estan de baja -- sin esto,
+            # 0/0 da NaN (no None) y contamina silenciosamente
+            # trend_total/gap_total del equipo completo (visto real en
+            # Apparel al activar el toggle 'excluir bajas').
+            if ytdly_val in (0, None) or pd.isna(ytdly_val):
+                crec_ytd = None
+            else:
+                crec_ytd = (ytd_cat.loc[cat_nbr, 'Com_Pesos_YTD'] - ytdly_val) / ytdly_val
+        else:
+            crec_ytd = None
+        com_mtd_actual = cat_agg.loc[cat_nbr, 'Com_Pesos_MTD'] if cat_nbr in cat_agg.index else None
+
+        growth_needed = (fcst_val - ly_val) / ly_val
+        trend_estimate = ly_val * (1 + crec_ytd) if crec_ytd is not None else None
+        gap = (trend_estimate - fcst_val) if trend_estimate is not None else None
+        gap_pct = (gap / fcst_val) if gap is not None else None
+        if gap_pct is None or crec_ytd is None:
+            risk = 'Sin dato'
+        elif crec_ytd < growth_needed - 0.05:
+            risk = 'Alto'
+        elif crec_ytd < growth_needed:
+            risk = 'Moderado'
+        else:
+            risk = 'Bajo'
+
+        categorias.append({
+            'cat_nbr': cat_nbr, 'cat_desc': cat_desc,
+            'fcst_sept': round(fcst_val, 2), 'ly_sept': round(ly_val, 2),
+            'fcst_vobo': (round(fcst_vobo, 2) if fcst_vobo else None),
+            'growth_needed': round(growth_needed, 4),
+            'crec_mtd_actual': (round(float(crec_mtd), 4) if crec_mtd is not None else None),
+            'crec_l7d_actual': (round(float(crec_l7d), 4) if crec_l7d is not None else None),
+            'crec_ytd_actual': (round(float(crec_ytd), 4) if crec_ytd is not None else None),
+            'com_mtd_actual': (round(float(com_mtd_actual), 2) if com_mtd_actual is not None else None),
+            'trend_estimate': (round(trend_estimate, 2) if trend_estimate is not None else None),
+            'gap': (round(gap, 2) if gap is not None else None),
+            'gap_pct': (round(gap_pct, 4) if gap_pct is not None else None),
+            'risk': risk,
+        })
+    categorias.sort(key=lambda c: c['fcst_sept'], reverse=True)
+
+    fcst_total = sum(c['fcst_sept'] for c in categorias)
+    ly_total = sum(c['ly_sept'] for c in categorias)
+    fcst_vobo_total = sum(c['fcst_vobo'] for c in categorias if c['fcst_vobo'] is not None) or None
+    trend_total = sum(c['trend_estimate'] for c in categorias if c['trend_estimate'] is not None)
+
+    tab1_kpis = tab1_data['todos' if suffix == '' else 'sin_baja']['kpis']
+
+    tot_com_ytd = float(frame['Com_Pesos_YTD'].sum())
+    tot_com_ytdly = float(frame['Com_Pesos_YTDLY'].sum())
+    crec_ytd_actual_total = (tot_com_ytd - tot_com_ytdly) / tot_com_ytdly
+
+    kpis = {
+        'fcst_total': round(fcst_total, 2), 'ly_total': round(ly_total, 2),
+        'fcst_vobo_total': (round(fcst_vobo_total, 2) if fcst_vobo_total else None),
+        'growth_needed_total': round((fcst_total - ly_total) / ly_total, 4),
+        'crec_mtd_actual_total': tab1_kpis['com_mtd_growth'],
+        'crec_l7d_actual_total': tab1_kpis['com_l7d_growth'],
+        'crec_ytd_actual_total': round(crec_ytd_actual_total, 4),
+        'trend_total': round(trend_total, 2),
+        'gap_total': round(trend_total - fcst_total, 2),
+        'gap_pct_total': round((trend_total - fcst_total) / fcst_total, 4),
+    }
+
+    riesgo_alto = [c['cat_desc'] for c in categorias if c['risk'] == 'Alto']
+    concentracion_txt = (
+        f"<strong>[Concentracion] El riesgo esta concentrado en {', '.join(riesgo_alto)}</strong> "
+        "&mdash; vienen desacelerando en su tendencia YTD justo cuando el FCST les pide mas crecimiento, no menos."
+    ) if riesgo_alto else (
+        "<strong>[Concentracion] Ninguna categoria esta en riesgo Alto</strong> con la tendencia YTD actual "
+        "&mdash; el riesgo, si lo hay, es moderado y disperso entre categorias."
     )
 
-# ---------- Evento "A la Mexicana" (9-16 sep 2026) ----------
-# Reusa 'full' (merged_full.csv) que ya trae las columnas *_AMX/*_AMXLY
-# de query_item_total_template.sql -- misma logica que Abarrotes,
-# factorizada en _common.compute_evento_amx() para no repetirla 6 veces.
-evento_amx = compute_evento_amx(full)
+    insights_top = [
+        f"<strong>[FCST] El objetivo de septiembre para {area} es {fmt_pct(kpis['growth_needed_total'])} YoY</strong> vs Sept 2025 "
+        f"(${ly_total/1e6:.1f}M &rarr; ${fcst_total/1e6:.1f}M) &mdash; el YTD real de .com va en {fmt_pct(kpis['crec_ytd_actual_total'])} "
+        f"(la base que usa el estimado de abajo), con un MTD de {fmt_pct(kpis['crec_mtd_actual_total'])} y una ultima semana de {fmt_pct(kpis['crec_l7d_actual_total'])}.",
+        (
+            f"<strong>[Riesgo] Si el ritmo YTD se mantiene</strong>, el estimado de septiembre sale en "
+            f"${kpis['trend_total']/1e6:.1f}M &mdash; un faltante de ${abs(kpis['gap_total'])/1e6:.1f}M ({fmt_pct(kpis['gap_pct_total'])}) vs el target."
+            if kpis['gap_total'] < 0 else
+            f"<strong>[Positivo] Con el ritmo YTD acumulado</strong>, el estimado de tendencia (${kpis['trend_total']/1e6:.1f}M) ya supera el target."
+        ),
+        concentracion_txt,
+    ]
+    if kpis['fcst_vobo_total']:
+        diff_vobo = kpis['trend_total'] - kpis['fcst_vobo_total']
+        insights_top.append(
+            f"<strong>[Referencia] El forecast oficial del equipo central (FCST VoBo)</strong> para {area} es ${kpis['fcst_vobo_total']/1e6:.1f}M "
+            f"&mdash; nuestro estimado basado en tendencia YTD (${kpis['trend_total']/1e6:.1f}M) queda "
+            f"{'por encima' if diff_vobo >= 0 else 'por debajo'} por ${abs(diff_vobo)/1e6:.1f}M."
+        )
+
+    # ---------- Evento "A la Mexicana" (9-16 sep 2026) ----------
+    # Reusa 'frame' (todos o sin_baja) que ya trae las columnas
+    # *_AMX/*_AMXLY de query_item_total_template.sql -- misma logica que
+    # Abarrotes, factorizada en _common.compute_evento_amx() para no
+    # repetirla 6 veces.
+    evento_amx = compute_evento_amx(frame)
+
+    return {
+        'kpis': kpis,
+        'categorias': categorias,
+        'insights_top': insights_top,
+        'evento_amx': evento_amx,
+    }
+
 
 data = {
     'disponible': True,
     'generated_at': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M'),
     'area': area,
-    'kpis': kpis,
-    'categorias': categorias,
-    'insights_top': insights_top,
-    'evento_amx': evento_amx,
+    'todos': build(''),
+    'sin_baja': build('_sin_baja'),
 }
 
 with open(out_dir / 'sept_data.json', 'w', encoding='utf-8') as f:
     json.dump(data, f, ensure_ascii=False, indent=2)
 
-print(f"[{team_key}] KPIs FCST:", json.dumps(kpis, indent=2, ensure_ascii=False))
-print(f"[{team_key}] Categorias FCST:", len(categorias))
-print(f"[{team_key}] Evento AMX:", json.dumps(evento_amx['kpis'], indent=2, ensure_ascii=False), '|', evento_amx['status_msg'])
+print(f"[{team_key}] KPIs FCST (todos):", json.dumps(data['todos']['kpis'], indent=2, ensure_ascii=False))
+print(f"[{team_key}] Categorias FCST:", len(data['todos']['categorias']))
+print(f"[{team_key}] Evento AMX (todos):", json.dumps(data['todos']['evento_amx']['kpis'], indent=2, ensure_ascii=False), '|', data['todos']['evento_amx']['status_msg'])

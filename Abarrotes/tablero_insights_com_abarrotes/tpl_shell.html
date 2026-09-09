@@ -20,6 +20,7 @@
   .chip-red { background:#fde8e6; color:#ea1100; }
   .chip-green { background:#e8f5e1; color:#2a8703; }
   .chip-gray { background:#eef1f6; color:#5b6675; }
+  .chip-yellow { background:#fff6da; color:#8a6d00; }
   thead th { background: #0053e2; color: white; position: sticky; top: 0; z-index: 10; cursor: default; }
   th.sortable { cursor: pointer; user-select: none; }
   th.sortable:hover { background: #003fb0; }
@@ -48,11 +49,15 @@
       <p class="text-gray-500 text-sm">Enfoque <strong>.com</strong> (con Piso/Brick visible como referencia) · MTD TY vs LY + Tendencia Últimos 7 Días · Sam's Club MX (176 clubs)</p>
     </div>
   </div>
-  <div class="flex gap-2 mt-2 flex-wrap">
+  <div class="flex gap-2 mt-2 flex-wrap items-center">
     <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Query: Ecatman YTD/MTD/7D Item Total</span>
     <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full">Categorías: Abarrotes Secos · Aceites/Granos/Aderezos · Frutas y Veg. Enlatados · Pastas y Condimentos · HORECA · Gourmet</span>
     <span class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">Cruce: Parrilla 10+1 Agosto + Histórico de Promos (vigentes) + Carruseles del sitio</span>
     <span class="bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">Generado: __GENERATED_AT__</span>
+    <label class="flex items-center gap-1.5 bg-white border border-gray-300 text-xs font-semibold px-3 py-1 rounded-full cursor-pointer" title="Los items de baja (Status D) NUNCA se descartan de la fuente -- este toggle solo los oculta de Resumen/Explorador/Septiembre en esta vista.">
+      <input type="checkbox" id="toggleExcluirBajas">
+      Excluir items de baja (Status D)
+    </label>
   </div>
 </div>
 
@@ -100,10 +105,16 @@ function switchTab(id) {
   document.querySelector(`.tab-btn[data-tab="${id}"]`).classList.add('active');
 }
 
-const DATA1 = __DATA1__;
+// DATA1_ALL/DATA4_ALL traen {todos, sin_baja} -- ver tpl_tab1.js/
+// tpl_tab4.js (funciones renderTab1/renderTab4) y el wiring del toggle
+// 'Excluir items de baja' al final de este archivo. DATA2 (Explorador
+// BQ) es item-level y NUNCA se descarta -- se filtra client-side con su
+// propio multiselect (incluye 'Status'). DATA3 (Promos) y DATA5
+// (Historico) quedan fuera del toggle (fuera de alcance v1).
+const DATA1_ALL = __DATA1__;
 const DATA2 = __DATA2__;
 const DATA3 = __DATA3__;
-const DATA4 = __DATA4__;
+const DATA4_ALL = __DATA4__;
 const DATA5 = __DATA5__;
 
 const fmtM = v => v == null ? '-' : `$${(v/1000000).toLocaleString('es-MX', {maximumFractionDigits:1})}M`;
@@ -155,6 +166,30 @@ __SCRIPT4__
 </script>
 <script>
 __SCRIPT5__
+</script>
+
+<script>
+// ---- Toggle global 'Excluir items de baja (Status D)' ----
+// Un solo punto de orquestacion: los items NUNCA se descartan de los
+// datos (peticion de Alberto, 09-sep-2026) -- este toggle solo decide
+// que vista (todos/sin_baja) usan Resumen y Septiembre (precalculadas
+// por partida doble en Python, ver build_merge.py::aggregate) y
+// pre-carga el filtro Status ya existente del Explorador BQ.
+function aplicarFiltroBajas(excluir) {
+  renderTab1(excluir ? DATA1_ALL.sin_baja : DATA1_ALL.todos);
+  renderTab4(excluir ? DATA4_ALL.sin_baja : DATA4_ALL.todos);
+  if (typeof expState !== 'undefined' && DATA2.filter_fields.includes('Status')) {
+    const opts = (DATA2.filter_options['Status'] || []).map(String);
+    expState.filters['Status'] = excluir ? new Set(opts.filter(v => v !== 'D')) : new Set();
+    document.querySelectorAll('#msPanel_Status input[type="checkbox"]').forEach(cb => {
+      cb.checked = expState.filters['Status'].size === 0 ? false : expState.filters['Status'].has(cb.value);
+    });
+    expUpdateBtnLabel('Status');
+    expState.page = 1;
+    expRender();
+  }
+}
+document.getElementById('toggleExcluirBajas').addEventListener('change', e => aplicarFiltroBajas(e.target.checked));
 </script>
 
 </body>

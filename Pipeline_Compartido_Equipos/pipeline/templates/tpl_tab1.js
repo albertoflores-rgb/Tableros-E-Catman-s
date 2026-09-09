@@ -1,4 +1,12 @@
 // ===== TAB 1: Resumen (generico, parametrizado) =====
+// Envuelto en renderTab1(d) para soportar el toggle 'excluir bajas
+// (Status D)' del header -- se llama de nuevo con DATA1_ALL.sin_baja
+// cuando el usuario activa el toggle, sin recargar la pagina (peticion
+// de Alberto, 09-sep-2026: no descartar items, dar la OPCION de
+// filtrarlos). Chart.getChart(id)?.destroy() evita duplicar canvases
+// cuando se vuelve a renderizar.
+
+function renderTab1(DATA1) {
 
 // ---- Insights ----
 document.getElementById('insightsTop').innerHTML = DATA1.insights_top.map(t =>
@@ -19,6 +27,7 @@ document.getElementById('kpiSociosMtd').textContent = (k1.com_socios_mtd ?? 0).t
 document.getElementById('kpiSociosMtdGrowth').innerHTML = (k1.com_socios_mtd_growth == null) ? '<span class="text-gray-400">sin LY</span>' : badge(k1.com_socios_mtd_growth) + ' vs LY';
 
 // ---- Chart: .com por categoria ----
+Chart.getChart('comCatChart')?.destroy();
 new Chart(document.getElementById('comCatChart'), {
   type: 'bar',
   data: {
@@ -36,6 +45,7 @@ new Chart(document.getElementById('comCatChart'), {
 });
 
 // ---- Chart: MTD vs L7D growth ----
+Chart.getChart('trendChart')?.destroy();
 new Chart(document.getElementById('trendChart'), {
   type: 'bar',
   data: {
@@ -53,6 +63,7 @@ new Chart(document.getElementById('trendChart'), {
 });
 
 // ---- Chart: Piso referencia ----
+Chart.getChart('pisoCatChart')?.destroy();
 new Chart(document.getElementById('pisoCatChart'), {
   type: 'bar',
   data: {
@@ -72,6 +83,7 @@ new Chart(document.getElementById('pisoCatChart'), {
 // ---- Category cards (clickeables -- ver toggleCatExpand, misma
 // funcionalidad que el tablero de Abarrotes: click en la tarjeta
 // expande el detalle de movers de esa categoria) ----
+window.__catExpandData = DATA1.categoria_items;
 document.getElementById('catCards').innerHTML = DATA1.categorias.map(c => `
   <div class="card cat-card p-4" onclick="toggleCatExpand('${c.cat_desc.replace(/'/g, "\\'")}')">
     <p class="font-bold text-blue-800 mb-1">${c.cat_desc}</p>
@@ -99,6 +111,36 @@ document.getElementById('catCards').innerHTML = DATA1.categorias.map(c => `
     </div>
   </div>`).join('');
 
+// ---- Tablas de movers (globales, top 20) ----
+document.getElementById('tblImpulsar').innerHTML = DATA1.movers.impulsar.map(r => moverRow(r, `
+    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(r.piso_mtd)}</td>
+    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(r.com_mtd)}</td>
+    <td class="px-3 py-1.5 text-right">${badge(r.crec_com_mtd)}</td>
+    <td class="px-3 py-1.5 text-right">${badge(r.crec_com_l7d)}</td>
+    <td class="px-3 py-1.5 text-center text-xs">#${r.top_l7d_cat ?? '-'}</td>
+    <td class="px-3 py-1.5 text-center"><span class="chip ${semColor(r.semaforo)}">${r.semaforo}</span></td>`)).join('');
+
+document.getElementById('riesgoSection').style.display = DATA1.movers.riesgo.length > 0 ? 'block' : 'none';
+if (DATA1.movers.riesgo.length > 0) {
+  document.getElementById('tblRiesgo').innerHTML = DATA1.movers.riesgo.map(r => moverRow(r, `
+      <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(r.com_mtd)}</td>
+      <td class="px-3 py-1.5 text-right">${badge(r.crec_com_mtd)}</td>
+      <td class="px-3 py-1.5 text-center"><span class="chip ${semColor(r.semaforo)}">${r.semaforo}</span></td>`)).join('');
+}
+
+document.getElementById('tblReplicar').innerHTML = DATA1.movers.replicar.map(r => moverRow(r, `
+    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(r.com_mtd)}</td>
+    <td class="px-3 py-1.5 text-right">${badge(r.crec_com_mtd)}</td>
+    <td class="px-3 py-1.5 text-right">${badge(r.crec_com_l7d)}</td>
+    <td class="px-3 py-1.5 text-center text-xs">#${r.top_l7d_cat ?? '-'}</td>`)).join('');
+
+// Cierra cualquier detalle de categoria abierto -- el toggle cambio el
+// universo de items, asi que el detalle viejo ya no aplica.
+document.getElementById('catExpand').style.display = 'none';
+expandedCat = null;
+
+}
+
 function itemMiniRow(r) {
   return `<tr>
     <td class="px-3 py-1.5"><span class="font-medium">${r.item_desc}</span><br><span class="text-xs text-gray-400">#${r.item_nbr}</span></td>
@@ -118,7 +160,7 @@ function toggleCatExpand(catDesc) {
     return;
   }
   expandedCat = catDesc;
-  const items = DATA1.categoria_items[catDesc] || { impulsar: [], replicar: [], riesgo: [] };
+  const items = (window.__catExpandData || {})[catDesc] || { impulsar: [], replicar: [], riesgo: [] };
   box.style.display = 'block';
   box.innerHTML = `
     <p class="section-title mb-1">${catDesc} — detalle de movers (top 15 por volumen c/u)</p>
@@ -152,7 +194,6 @@ function toggleCatExpand(catDesc) {
   box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// ---- Tablas de movers (globales, top 20) ----
 function moverRow(r, extra) {
   return `<tr class="${r.crec_com_mtd < 0 ? 'tbl-row-neg' : 'tbl-row-pos'}">
     <td class="px-3 py-1.5"><span class="font-medium">${r.item_desc}</span><br><span class="text-xs text-gray-400">#${r.item_nbr}</span></td>
@@ -161,24 +202,4 @@ function moverRow(r, extra) {
   </tr>`;
 }
 
-document.getElementById('tblImpulsar').innerHTML = DATA1.movers.impulsar.map(r => moverRow(r, `
-    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(r.piso_mtd)}</td>
-    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(r.com_mtd)}</td>
-    <td class="px-3 py-1.5 text-right">${badge(r.crec_com_mtd)}</td>
-    <td class="px-3 py-1.5 text-right">${badge(r.crec_com_l7d)}</td>
-    <td class="px-3 py-1.5 text-center text-xs">#${r.top_l7d_cat ?? '-'}</td>
-    <td class="px-3 py-1.5 text-center"><span class="chip ${semColor(r.semaforo)}">${r.semaforo}</span></td>`)).join('');
-
-if (DATA1.movers.riesgo.length > 0) {
-  document.getElementById('riesgoSection').style.display = 'block';
-  document.getElementById('tblRiesgo').innerHTML = DATA1.movers.riesgo.map(r => moverRow(r, `
-      <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(r.com_mtd)}</td>
-      <td class="px-3 py-1.5 text-right">${badge(r.crec_com_mtd)}</td>
-      <td class="px-3 py-1.5 text-center"><span class="chip ${semColor(r.semaforo)}">${r.semaforo}</span></td>`)).join('');
-}
-
-document.getElementById('tblReplicar').innerHTML = DATA1.movers.replicar.map(r => moverRow(r, `
-    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(r.com_mtd)}</td>
-    <td class="px-3 py-1.5 text-right">${badge(r.crec_com_mtd)}</td>
-    <td class="px-3 py-1.5 text-right">${badge(r.crec_com_l7d)}</td>
-    <td class="px-3 py-1.5 text-center text-xs">#${r.top_l7d_cat ?? '-'}</td>`)).join('');
+renderTab1(DATA1_ALL.todos);

@@ -34,7 +34,7 @@ with open(out_dir / 'explorer_data.json', 'r', encoding='utf-8') as f:
 with open(out_dir / 'sept_data.json', 'r', encoding='utf-8') as f:
     data3 = json.load(f)
 
-n_cats = len(data1['categorias'])
+n_cats = len(data1['todos']['categorias'])
 
 html = (
     shell
