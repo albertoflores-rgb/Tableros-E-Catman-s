@@ -22,6 +22,31 @@ const gapSign3 = k3.gap_total >= 0 ? '+' : '';
 gapEl3.textContent = `${gapSign3}${fmtM(k3.gap_total)} (${fmtPct(k3.gap_pct_total)})`;
 gapEl3.className = 'text-2xl font-bold ' + (k3.gap_total >= 0 ? 'kpi-up' : 'kpi-dn');
 
+// ---- Evento "A la Mexicana" ----
+const amx3 = DATA3.evento_amx;
+document.getElementById('amx-status-msg').textContent = amx3.status_msg;
+document.getElementById('amx-kpi-com').textContent = fmtM(amx3.kpis.com_amx);
+document.getElementById('amx-kpi-comly').textContent = fmtM(amx3.kpis.com_amxly);
+
+const amxCrecComEl3 = document.getElementById('amx-kpi-crec-com');
+amxCrecComEl3.textContent = fmtPct(amx3.kpis.crec_com_amx);
+amxCrecComEl3.className = 'text-2xl font-bold ' + (amx3.kpis.crec_com_amx == null ? 'kpi-muted' : (amx3.kpis.crec_com_amx >= 0 ? 'kpi-up' : 'kpi-dn'));
+
+const amxCrecPisoEl3 = document.getElementById('amx-kpi-crec-piso');
+amxCrecPisoEl3.textContent = fmtPct(amx3.kpis.crec_piso_amx);
+amxCrecPisoEl3.className = 'text-2xl font-bold ' + (amx3.kpis.crec_piso_amx == null ? 'kpi-muted' : (amx3.kpis.crec_piso_amx >= 0 ? 'kpi-up' : 'kpi-dn'));
+
+document.getElementById('amx-tbl-cats').innerHTML = amx3.categorias.map(c => `
+  <tr>
+    <td class="px-3 py-1.5 font-medium">${c.cat_desc}</td>
+    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(c.com_amx)}</td>
+    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(c.com_amxly)}</td>
+    <td class="px-3 py-1.5 text-right">${badge(c.crec_com_amx)}</td>
+    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(c.piso_amx)}</td>
+    <td class="px-3 py-1.5 text-right">${badge(c.crec_piso_amx)}</td>
+    <td class="px-3 py-1.5 text-right">${c.share_com_amx != null ? (c.share_com_amx*100).toFixed(1)+'%' : '-'}</td>
+  </tr>`).join('');
+
 const RISK_COLOR3 = { 'Alto': '#ea1100', 'Moderado': '#ffc220', 'Bajo': '#2a8703', 'Sin dato': '#9ca3af' };
 new Chart(document.getElementById('sept-chart'), {
   type: 'bar',

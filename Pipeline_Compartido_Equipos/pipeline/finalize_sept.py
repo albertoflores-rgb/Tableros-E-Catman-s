@@ -18,7 +18,7 @@ import json
 import pandas as pd
 import openpyxl
 
-from _common import team_dir, get_team_cfg
+from _common import team_dir, get_team_cfg, compute_evento_amx
 
 team_key = sys.argv[1]
 cfg = get_team_cfg(team_key)
@@ -245,6 +245,12 @@ if kpis['fcst_vobo_total']:
         f"{'por encima' if diff_vobo >= 0 else 'por debajo'} por ${abs(diff_vobo)/1e6:.1f}M."
     )
 
+# ---------- Evento "A la Mexicana" (9-16 sep 2026) ----------
+# Reusa 'full' (merged_full.csv) que ya trae las columnas *_AMX/*_AMXLY
+# de query_item_total_template.sql -- misma logica que Abarrotes,
+# factorizada en _common.compute_evento_amx() para no repetirla 6 veces.
+evento_amx = compute_evento_amx(full)
+
 data = {
     'disponible': True,
     'generated_at': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M'),
@@ -252,6 +258,7 @@ data = {
     'kpis': kpis,
     'categorias': categorias,
     'insights_top': insights_top,
+    'evento_amx': evento_amx,
 }
 
 with open(out_dir / 'sept_data.json', 'w', encoding='utf-8') as f:
@@ -259,3 +266,4 @@ with open(out_dir / 'sept_data.json', 'w', encoding='utf-8') as f:
 
 print(f"[{team_key}] KPIs FCST:", json.dumps(kpis, indent=2, ensure_ascii=False))
 print(f"[{team_key}] Categorias FCST:", len(categorias))
+print(f"[{team_key}] Evento AMX:", json.dumps(evento_amx['kpis'], indent=2, ensure_ascii=False), '|', evento_amx['status_msg'])
