@@ -27,6 +27,16 @@ parrilla_set = set(parrilla['Item_Nbr'].astype('int64'))
 
 # ---------- Merge ----------
 bq['Item_Nbr'] = bq['Item_Nbr'].astype('int64')
+
+# Descartar items de status 'D' (baja/descontinuados) de TODAS las
+# pestanas -- mismo criterio que el pipeline generico de los 6 equipos
+# (peticion de Alberto, 09-sep-2026). Se filtra ANTES del merge con
+# promos/parrilla para que cat_agg/accionables/movers salgan limpios
+# sin repetir el filtro rio abajo.
+n_antes = len(bq)
+bq = bq[bq['Status'] != 'D'].copy()
+print(f"Descartados por Status='D' (baja/descontinuados): {n_antes - len(bq)} de {n_antes}")
+
 df = bq.merge(vigentes, on='Item_Nbr', how='left')
 df['En_Parrilla'] = df['Item_Nbr'].isin(parrilla_set)
 df['Promo_Vigente'] = df['Promo_Inicio'].notna()
@@ -91,7 +101,18 @@ cat_agg = df.groupby(['Cat_Nbr', 'Cat_Desc']).agg(
     Piso_Pesos_L7D=('Piso_Pesos_L7D', 'sum'),
     Piso_Pesos_L7DLY=('Piso_Pesos_L7DLY', 'sum'),
     Ordenes_Com_MTD=('Ordenes_Com_MTD', 'sum'),
-    Numero_Socios_MTD=('Numero_Socios_MTD', 'sum'),
+    # Socios_Cat_* ya vienen correctos por categoria desde BigQuery
+    # (COUNT DISTINCT Membresia_Nbr agrupado por Cat_Nbr -- ver
+    # cte_socios_cat en query_item_total_abarrotes.sql). Son constantes
+    # dentro de cada categoria, por eso 'first' y NUNCA 'sum' -- sumar
+    # un COUNT(DISTINCT) ya agregado multiplicaria por el numero de
+    # items de la categoria (ese era el bug original).
+    Socios_Cat_MTD=('Socios_Cat_MTD', 'first'),
+    Socios_Cat_MTDLY=('Socios_Cat_MTDLY', 'first'),
+    Socios_Cat_YTD=('Socios_Cat_YTD', 'first'),
+    Socios_Cat_YTDLY=('Socios_Cat_YTDLY', 'first'),
+    Socios_Cat_L7D=('Socios_Cat_L7D', 'first'),
+    Socios_Cat_L7DLY=('Socios_Cat_L7DLY', 'first'),
     N_Items=('Item_Nbr', 'nunique'),
 ).reset_index()
 

@@ -27,6 +27,9 @@ const amx3 = DATA3.evento_amx;
 document.getElementById('amx-status-msg').textContent = amx3.status_msg;
 document.getElementById('amx-kpi-com').textContent = fmtM(amx3.kpis.com_amx);
 document.getElementById('amx-kpi-comly').textContent = fmtM(amx3.kpis.com_amxly);
+document.getElementById('amx-kpi-comly-comparable').textContent = amx3.iniciado
+  ? `dia comparable (${amx3.dias_transcurridos}/${amx3.dias_totales} dias): ${fmtM(amx3.kpis.com_amxly_comparable)}`
+  : '';
 
 const amxCrecComEl3 = document.getElementById('amx-kpi-crec-com');
 amxCrecComEl3.textContent = fmtPct(amx3.kpis.crec_com_amx);

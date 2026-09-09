@@ -149,10 +149,17 @@ for cat_nbr, vals in fcst_by_cat.items():
     crec_mtd = cat_agg.loc[cat_nbr, 'Crec_Com_MTD'] if cat_nbr in cat_agg.index else None
     crec_l7d = cat_agg.loc[cat_nbr, 'Crec_Com_L7D'] if cat_nbr in cat_agg.index else None
     if cat_nbr in ytd_cat.index:
-        crec_ytd = (
-            (ytd_cat.loc[cat_nbr, 'Com_Pesos_YTD'] - ytd_cat.loc[cat_nbr, 'Com_Pesos_YTDLY'])
-            / ytd_cat.loc[cat_nbr, 'Com_Pesos_YTDLY']
-        )
+        ytdly_val = ytd_cat.loc[cat_nbr, 'Com_Pesos_YTDLY']
+        # Guardia explicita (no solo 'is not None'): con el filtro de
+        # Status='D' (09-sep-2026) es posible que una categoria se quede
+        # con YTDLY exactamente en $0 si todo su historico vivia en items
+        # que hoy estan de baja -- sin esto, 0/0 da NaN (no None) y
+        # contamina silenciosamente trend_total/gap_total del equipo
+        # completo (visto real en Apparel al activar el filtro).
+        if ytdly_val in (0, None) or pd.isna(ytdly_val):
+            crec_ytd = None
+        else:
+            crec_ytd = (ytd_cat.loc[cat_nbr, 'Com_Pesos_YTD'] - ytdly_val) / ytdly_val
     else:
         crec_ytd = None
     com_mtd_actual = cat_agg.loc[cat_nbr, 'Com_Pesos_MTD'] if cat_nbr in cat_agg.index else None
@@ -161,7 +168,7 @@ for cat_nbr, vals in fcst_by_cat.items():
     trend_estimate = ly_val * (1 + crec_ytd) if crec_ytd is not None else None
     gap = (trend_estimate - fcst_val) if trend_estimate is not None else None
     gap_pct = (gap / fcst_val) if gap is not None else None
-    if gap_pct is None:
+    if gap_pct is None or crec_ytd is None:
         risk = 'Sin dato'
     elif crec_ytd < growth_needed - 0.05:
         risk = 'Alto'

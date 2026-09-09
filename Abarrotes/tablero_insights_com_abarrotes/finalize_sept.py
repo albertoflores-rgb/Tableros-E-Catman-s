@@ -54,16 +54,23 @@ for cat_nbr, fcst_val in fcst_row.items():
     ly_val = ly_row[cat_nbr]
     crec_mtd = cat_agg.loc[cat_nbr, 'Crec_Com_MTD']
     crec_l7d = cat_agg.loc[cat_nbr, 'Crec_Com_L7D']
-    crec_ytd = (
-        (ytd_cat.loc[cat_nbr, 'Com_Pesos_YTD'] - ytd_cat.loc[cat_nbr, 'Com_Pesos_YTDLY'])
-        / ytd_cat.loc[cat_nbr, 'Com_Pesos_YTDLY']
-    )
+    ytdly_val = ytd_cat.loc[cat_nbr, 'Com_Pesos_YTDLY']
+    # Guardia explicita (no solo dividir directo): con el filtro de
+    # Status='D' (09-sep-2026) es posible que una categoria se quede con
+    # YTDLY en $0 si todo su historico vivia en items hoy de baja -- sin
+    # esto, 0/0 da NaN y contamina trend_total/gap_total silenciosamente.
+    if ytdly_val in (0, None) or pd.isna(ytdly_val):
+        crec_ytd = None
+    else:
+        crec_ytd = (ytd_cat.loc[cat_nbr, 'Com_Pesos_YTD'] - ytdly_val) / ytdly_val
     com_mtd_actual = cat_agg.loc[cat_nbr, 'Com_Pesos_MTD']
     growth_needed = (fcst_val - ly_val) / ly_val
-    trend_estimate = ly_val * (1 + crec_ytd)
-    gap = trend_estimate - fcst_val
-    gap_pct = gap / fcst_val
-    if crec_ytd < growth_needed - 0.05:
+    trend_estimate = ly_val * (1 + crec_ytd) if crec_ytd is not None else None
+    gap = (trend_estimate - fcst_val) if trend_estimate is not None else None
+    gap_pct = (gap / fcst_val) if gap is not None else None
+    if crec_ytd is None:
+        risk = 'Sin dato'
+    elif crec_ytd < growth_needed - 0.05:
         risk = 'Alto'
     elif crec_ytd < growth_needed:
         risk = 'Moderado'
@@ -74,14 +81,16 @@ for cat_nbr, fcst_val in fcst_row.items():
         'fcst_sept': round(fcst_val, 2), 'ly_sept': round(ly_val, 2),
         'growth_needed': round(growth_needed, 4),
         'crec_mtd_actual': round(float(crec_mtd), 4), 'crec_l7d_actual': round(float(crec_l7d), 4),
-        'crec_ytd_actual': round(float(crec_ytd), 4),
+        'crec_ytd_actual': (round(float(crec_ytd), 4) if crec_ytd is not None else None),
         'com_mtd_actual': round(float(com_mtd_actual), 2),
-        'trend_estimate': round(trend_estimate, 2), 'gap': round(gap, 2), 'gap_pct': round(gap_pct, 4),
+        'trend_estimate': (round(trend_estimate, 2) if trend_estimate is not None else None),
+        'gap': (round(gap, 2) if gap is not None else None),
+        'gap_pct': (round(gap_pct, 4) if gap_pct is not None else None),
         'risk': risk,
     })
 categorias.sort(key=lambda c: c['fcst_sept'], reverse=True)
 
-trend_total = sum(c['trend_estimate'] for c in categorias)
+trend_total = sum(c['trend_estimate'] for c in categorias if c['trend_estimate'] is not None)
 
 # Crecimiento MTD/L7D total real de .com Abarrotes -- se lee de dashboard_data.json
 # (pestana 1), NUNCA se hardcodea aqui para que no se desactualice con el resto
@@ -170,12 +179,21 @@ items = {
 # Reusa 'full' (merged_full.csv) que ya trae las columnas *_AMX/*_AMXLY
 # porque build_merge.py pasa TODAS las columnas de raw_bq_item_total.csv
 # sin filtrar -- no hizo falta tocar build_merge.py/cat_agg.csv para esto.
-from datetime import date
+from datetime import date, timedelta
 
 AMX_INI = date(2026, 9, 9)
 AMX_FIN = date(2026, 9, 16)
+# BigQuery no tiene la venta de "hoy" todavia (1 dia de atraso normal) --
+# ver misma logica/comentario en catman_equipos/pipeline/_common.py::
+# compute_evento_amx. 'Dia comparable': se topa dias_transcurridos y el
+# LY contra el que se compara al ultimo dia que YA deberia estar cargado
+# en BQ, para no comparar un TY parcial contra un LY de 8 dias completos
+# (peticion de Alberto, 09-sep-2026).
+AMX_DATA_LAG_DIAS = 1
 hoy = pd.Timestamp.now().date()
-amx_iniciado = hoy >= AMX_INI
+dia_con_datos = hoy - timedelta(days=AMX_DATA_LAG_DIAS)
+dia_comparable = min(dia_con_datos, AMX_FIN)
+amx_iniciado = dia_comparable >= AMX_INI
 
 
 def safe_growth(cur, prev):
@@ -196,18 +214,25 @@ amx_cat = full.groupby(['Cat_Nbr', 'Cat_Desc']).agg(
     Piso_Pesos_AMX=('Piso_Pesos_AMX', 'sum'), Piso_Pesos_AMXLY=('Piso_Pesos_AMXLY', 'sum'),
 ).reset_index()
 
+dias_totales = (AMX_FIN - AMX_INI).days + 1
+dias_transcurridos = (dia_comparable - AMX_INI).days + 1 if amx_iniciado else 0
+frac_comparable = (dias_transcurridos / dias_totales) if amx_iniciado else 0.0
+
 amx_categorias = []
 for _, r in amx_cat.iterrows():
     com_amx, com_amxly = float(r['Com_Pesos_AMX']), float(r['Com_Pesos_AMXLY'])
     piso_amx, piso_amxly = float(r['Piso_Pesos_AMX']), float(r['Piso_Pesos_AMXLY'])
+    com_amxly_comp, piso_amxly_comp = com_amxly * frac_comparable, piso_amxly * frac_comparable
     total_amx = com_amx + piso_amx
-    crec_com = safe_growth(com_amx, com_amxly)
-    crec_piso = safe_growth(piso_amx, piso_amxly)
+    crec_com = safe_growth(com_amx, com_amxly_comp)
+    crec_piso = safe_growth(piso_amx, piso_amxly_comp)
     amx_categorias.append({
         'cat_nbr': int(r['Cat_Nbr']), 'cat_desc': r['Cat_Desc'],
         'com_amx': round(com_amx, 2), 'com_amxly': round(com_amxly, 2),
+        'com_amxly_comparable': round(com_amxly_comp, 2),
         'crec_com_amx': (round(crec_com, 4) if crec_com is not None else None),
         'piso_amx': round(piso_amx, 2), 'piso_amxly': round(piso_amxly, 2),
+        'piso_amxly_comparable': round(piso_amxly_comp, 2),
         'crec_piso_amx': (round(crec_piso, 4) if crec_piso is not None else None),
         'share_com_amx': (round(com_amx / total_amx, 4) if total_amx > 0 else None),
     })
@@ -215,21 +240,23 @@ amx_categorias.sort(key=lambda c: c['com_amx'], reverse=True)
 
 tot_com_amx, tot_com_amxly = float(full['Com_Pesos_AMX'].sum()), float(full['Com_Pesos_AMXLY'].sum())
 tot_piso_amx, tot_piso_amxly = float(full['Piso_Pesos_AMX'].sum()), float(full['Piso_Pesos_AMXLY'].sum())
-crec_com_amx_total = safe_growth(tot_com_amx, tot_com_amxly)
-crec_piso_amx_total = safe_growth(tot_piso_amx, tot_piso_amxly)
+tot_com_amxly_comp, tot_piso_amxly_comp = tot_com_amxly * frac_comparable, tot_piso_amxly * frac_comparable
+crec_com_amx_total = safe_growth(tot_com_amx, tot_com_amxly_comp)
+crec_piso_amx_total = safe_growth(tot_piso_amx, tot_piso_amxly_comp)
 
-dias_totales = (AMX_FIN - AMX_INI).days + 1
 iniciado = amx_iniciado
-terminado = hoy > AMX_FIN
+terminado = dia_con_datos > AMX_FIN
 if not iniciado:
-    dias_transcurridos = 0
     amx_status_msg = f"El evento arranca el {AMX_INI.strftime('%d-%b-%Y')} -- estos valores se activan solos ese dia con la corrida diaria de siempre, no hace falta tocar nada."
 elif not terminado:
-    dias_transcurridos = (hoy - AMX_INI).days + 1
-    amx_status_msg = f"Evento en curso: dia {dias_transcurridos} de {dias_totales} ({AMX_INI.strftime('%d-%b')} -> {AMX_FIN.strftime('%d-%b')})."
+    amx_status_msg = (
+        f"Evento en curso: dia {dias_transcurridos} de {dias_totales} "
+        f"({AMX_INI.strftime('%d-%b')} -> {AMX_FIN.strftime('%d-%b')}). "
+        f"Crecimiento vs LY de los mismos {dias_transcurridos} dias transcurridos (dia comparable), "
+        f"no vs los {dias_totales} dias completos de LY -- BigQuery tiene 1 dia de atraso normal en la venta de hoy."
+    )
 else:
-    dias_transcurridos = dias_totales
-    amx_status_msg = f"Evento cerrado ({AMX_INI.strftime('%d-%b')} -> {AMX_FIN.strftime('%d-%b')}) -- resultado final vs LY."
+    amx_status_msg = f"Evento cerrado ({AMX_INI.strftime('%d-%b')} -> {AMX_FIN.strftime('%d-%b')}) -- resultado final vs LY completo (mismos {dias_totales} dias)."
 
 evento_amx = {
     'fecha_ini': AMX_INI.isoformat(), 'fecha_fin': AMX_FIN.isoformat(),
@@ -238,8 +265,10 @@ evento_amx = {
     'status_msg': amx_status_msg,
     'kpis': {
         'com_amx': round(tot_com_amx, 2), 'com_amxly': round(tot_com_amxly, 2),
+        'com_amxly_comparable': round(tot_com_amxly_comp, 2),
         'crec_com_amx': (round(crec_com_amx_total, 4) if crec_com_amx_total is not None else None),
         'piso_amx': round(tot_piso_amx, 2), 'piso_amxly': round(tot_piso_amxly, 2),
+        'piso_amxly_comparable': round(tot_piso_amxly_comp, 2),
         'crec_piso_amx': (round(crec_piso_amx_total, 4) if crec_piso_amx_total is not None else None),
     },
     'categorias': amx_categorias,

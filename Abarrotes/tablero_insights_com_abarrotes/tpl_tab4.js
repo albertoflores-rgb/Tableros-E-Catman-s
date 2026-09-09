@@ -6,7 +6,7 @@ const k4 = DATA4.kpis;
 document.getElementById('sept-kpi-fcst').textContent = fmtM(k4.fcst_total);
 document.getElementById('sept-kpi-ly').textContent = fmtM(k4.ly_total);
 document.getElementById('sept-kpi-needed').textContent = fmtPct(k4.growth_needed_total);
-document.getElementById('sept-kpi-actual-trend').textContent = `MTD real: ${fmtPct(k4.crec_mtd_actual_total)} · L7D real: ${fmtPct(k4.crec_l7d_actual_total)}`;
+document.getElementById('sept-kpi-actual-trend').textContent = `MTD real: ${fmtPct(k4.crec_mtd_actual_total)} · YTD real: ${fmtPct(k4.crec_ytd_actual_total)} · L7D real: ${fmtPct(k4.crec_l7d_actual_total)}`;
 
 const trendEl = document.getElementById('sept-kpi-trend');
 trendEl.textContent = fmtM(k4.trend_total);
@@ -17,6 +17,34 @@ const gapSign = k4.gap_total >= 0 ? '+' : '';
 gapEl.textContent = `${gapSign}${fmtM(k4.gap_total)} (${fmtPct(k4.gap_pct_total)})`;
 gapEl.className = 'text-2xl font-bold ' + (k4.gap_total >= 0 ? 'kpi-up' : 'kpi-dn');
 
+// ---- Evento "A la Mexicana" ----
+const amx = DATA4.evento_amx;
+document.getElementById('amx-status-msg').textContent = amx.status_msg;
+document.getElementById('amx-kpi-com').textContent = fmtM(amx.kpis.com_amx);
+document.getElementById('amx-kpi-comly').textContent = fmtM(amx.kpis.com_amxly);
+document.getElementById('amx-kpi-comly-comparable').textContent = amx.iniciado
+  ? `dia comparable (${amx.dias_transcurridos}/${amx.dias_totales} dias): ${fmtM(amx.kpis.com_amxly_comparable)}`
+  : '';
+
+const amxCrecComEl = document.getElementById('amx-kpi-crec-com');
+amxCrecComEl.textContent = fmtPct(amx.kpis.crec_com_amx);
+amxCrecComEl.className = 'text-2xl font-bold ' + (amx.kpis.crec_com_amx == null ? 'kpi-muted' : (amx.kpis.crec_com_amx >= 0 ? 'kpi-up' : 'kpi-dn'));
+
+const amxCrecPisoEl = document.getElementById('amx-kpi-crec-piso');
+amxCrecPisoEl.textContent = fmtPct(amx.kpis.crec_piso_amx);
+amxCrecPisoEl.className = 'text-2xl font-bold ' + (amx.kpis.crec_piso_amx == null ? 'kpi-muted' : (amx.kpis.crec_piso_amx >= 0 ? 'kpi-up' : 'kpi-dn'));
+
+document.getElementById('amx-tbl-cats').innerHTML = amx.categorias.map(c => `
+  <tr>
+    <td class="px-3 py-1.5 font-medium">${c.cat_desc}</td>
+    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(c.com_amx)}</td>
+    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(c.com_amxly)}</td>
+    <td class="px-3 py-1.5 text-right">${badge(c.crec_com_amx)}</td>
+    <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(c.piso_amx)}</td>
+    <td class="px-3 py-1.5 text-right">${badge(c.crec_piso_amx)}</td>
+    <td class="px-3 py-1.5 text-right">${c.share_com_amx != null ? (c.share_com_amx*100).toFixed(1)+'%' : '-'}</td>
+  </tr>`).join('');
+
 // ---- Chart: FCST vs Estimado de tendencia por categoria ----
 const RISK_COLOR = { 'Alto': '#ea1100', 'Moderado': '#ffc220', 'Bajo': '#2a8703' };
 new Chart(document.getElementById('sept-chart'), {
@@ -25,7 +53,7 @@ new Chart(document.getElementById('sept-chart'), {
     labels: DATA4.categorias.map(c => c.cat_desc),
     datasets: [
       { label: 'FCST Sept (target)', data: DATA4.categorias.map(c => c.fcst_sept/1e6), backgroundColor: '#0053e2', borderRadius: 6 },
-      { label: 'Estimado tendencia L7D', data: DATA4.categorias.map(c => c.trend_estimate/1e6),
+      { label: 'Estimado tendencia YTD', data: DATA4.categorias.map(c => c.trend_estimate/1e6),
         backgroundColor: DATA4.categorias.map(c => RISK_COLOR[c.risk]), borderRadius: 6 },
     ]
   },
@@ -45,7 +73,7 @@ document.getElementById('sept-tbl-cats').innerHTML = DATA4.categorias.map(c => `
     <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(c.ly_sept)}</td>
     <td class="px-3 py-1.5 text-right">${fmtPct(c.growth_needed)}</td>
     <td class="px-3 py-1.5 text-right">${badge(c.crec_mtd_actual)}</td>
-    <td class="px-3 py-1.5 text-right">${badge(c.crec_l7d_actual)}</td>
+    <td class="px-3 py-1.5 text-right">${badge(c.crec_ytd_actual)}</td>
     <td class="px-3 py-1.5 text-right font-mono">${fmtPesos(c.trend_estimate)}</td>
     <td class="px-3 py-1.5 text-right font-mono">${c.gap >= 0 ? '+' : ''}${fmtPesos(c.gap)}</td>
     <td class="px-3 py-1.5 text-right">${c.gap_pct >= 0 ? '+' : ''}${(c.gap_pct*100).toFixed(1)}%</td>

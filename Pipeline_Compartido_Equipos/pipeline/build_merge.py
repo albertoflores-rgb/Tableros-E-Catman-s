@@ -16,6 +16,16 @@ raw_csv = CATMAN_DIR / f"raw_bq_item_total_{team_key}.csv"
 bq = pd.read_csv(raw_csv, low_memory=False)
 bq['Item_Nbr'] = bq['Item_Nbr'].astype('int64')
 
+# Descartar items de status 'D' (baja/descontinuados) de TODAS las
+# pestanas -- se filtra aqui, en el unico punto de entrada antes de
+# cualquier agregacion, para que cat_agg.csv/merged_full.csv/movers/
+# accionables (y por lo tanto Resumen, Explorador BQ y Septiembre FCST,
+# que leen de estos mismos archivos) queden consistentes sin repetir el
+# filtro en cada script (peticion de Alberto, 09-sep-2026).
+n_antes = len(bq)
+bq = bq[bq['Status'] != 'D'].copy()
+print(f"[{team_key}] Descartados por Status='D' (baja/descontinuados): {n_antes - len(bq)} de {n_antes}")
+
 df = bq.copy()
 print(f"[{team_key}] Items totales:", len(df))
 
