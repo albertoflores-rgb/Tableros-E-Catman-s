@@ -38,8 +38,8 @@
   </div>
   <div class="flex gap-2 mt-2 flex-wrap">
     <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Query: query_v1_todos_deptos.sql — v4.3</span>
-    <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full">232,988 items · 9 departamentos</span>
-    <span class="bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">Generado: 09-Sep-2026 09:35</span>
+    <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full">233,118 items · 9 departamentos</span>
+    <span class="bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">Generado: 14-Sep-2026 21:47</span>
     <span class="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">Legado V1 — ver tablero-insights-com-total-departamentos para la version recomendada (mas barata)</span>
   </div>
 </div>
@@ -48,7 +48,7 @@
 <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
   <div class="card p-4">
     <p class="text-xs text-gray-500 font-semibold uppercase">Items totales</p>
-    <p class="text-2xl font-bold text-blue-800">232,988</p>
+    <p class="text-2xl font-bold text-blue-800">233,118</p>
   </div>
   <div class="card p-4">
     <p class="text-xs text-gray-500 font-semibold uppercase">Departamentos</p>
@@ -56,17 +56,17 @@
   </div>
   <div class="card p-4">
     <p class="text-xs text-gray-500 font-semibold uppercase">Venta Total YTD</p>
-    <p class="text-2xl font-bold text-green-700">$165.6B</p>
-    <p class="text-[11px] text-gray-400">$165,599,364,969.32 MXN</p>
+    <p class="text-2xl font-bold text-green-700">$168.8B</p>
+    <p class="text-[11px] text-gray-400">$168,846,814,132.54 MXN</p>
   </div>
   <div class="card p-4">
     <p class="text-xs text-gray-500 font-semibold uppercase">Impresiones YTD (Adobe)</p>
-    <p class="text-2xl font-bold text-blue-800">3.86B</p>
+    <p class="text-2xl font-bold text-blue-800">3.97B</p>
     <p class="text-[11px] text-gray-400">suma de las areas, proxy search/browse</p>
   </div>
   <div class="card p-4">
     <p class="text-xs text-gray-500 font-semibold uppercase">Costo BQ (query completo)</p>
-    <p class="text-2xl font-bold text-red-700">~3.83 TB</p>
+    <p class="text-2xl font-bold text-red-700">~3.93 TB</p>
     <p class="text-[11px] text-gray-400">bloque Impresiones Adobe, ver nota abajo</p>
   </div>
 </div>
@@ -75,7 +75,7 @@
 <div class="card p-5 mb-6 flex flex-col md:flex-row items-center justify-between gap-4" style="border-top:4px solid #ffc220;">
   <div>
     <p class="section-title mb-1">Descarga completa</p>
-    <p class="text-sm text-gray-600">232,988 filas / 122 columnas (venta física + .com + inventario + impresiones Adobe, TY y LY, los 4 momentos y % de crecimiento) en un solo CSV, listo para Excel/Power BI.</p>
+    <p class="text-sm text-gray-600">233,118 filas / 122 columnas (venta física + .com + inventario + impresiones Adobe, TY y LY, los 4 momentos y % de crecimiento) en un solo CSV, listo para Excel/Power BI.</p>
   </div>
   <a class="btn-download" href="https://github.com/albertoflores-rgb/Tableros-E-Catman-s/tree/main/Pipeline_Compartido_Equipos/Total_Departamentos" target="_blank" rel="noopener">
      Ver / descargar CSV completo en GitHub
@@ -137,43 +137,43 @@
   <p>Fuente: BigQuery — venta física (SKU_DLY_POS) + venta .com (Sams_Ventas) + inventario (MDSE_INVENTORY) + impresiones en sitio (sams_mx_csd_adobe_event, proxy search/browse).</p>
   <p><strong>Nota de costo:</strong> esta corrida (sin filtro de categoría, "todos los departamentos") escanea el bloque completo de Impresiones Adobe sin particion util para el filtro de canal -- costo real tipico ~2.7-3.9 TB por corrida, ver KPI de costo arriba para el numero exacto de esta corrida.</p>
   <p><strong>Nota de grano:</strong> Impresiones_* son a nivel NACIONAL por ítem (Adobe no trackea por club físico) — no confundir con métricas de venta que sí varían por club en la versión "Club x Ítem" del query.</p>
-  <p>Generado por Code Puppy Tyzon · wmt-intl-cons-mx-users · 09-Sep-2026 09:35</p>
+  <p>Generado por Code Puppy Tyzon · wmt-intl-cons-mx-users · 14-Sep-2026 21:47</p>
 </footer>
 
 <script>
 const DEPTOS = [
-  {dep:"SALUD Y BIENESTAR", items:15583, venta:39369202081.91, pzas:201521724, impresiones:775583106, inv:16491531},
-  {dep:"ABARROTES", items:5947, venta:38970911570.52, pzas:219794234, impresiones:619775270, inv:20178097},
-  {dep:"IMPULSO", items:9111, venta:27454575754.06, pzas:202204799, impresiones:557733474, inv:19222225},
-  {dep:"REFRIGERADOS, CONGELADOS Y BEBIDAS", items:2941, venta:20680883535.86, pzas:127753186, impresiones:417803532, inv:6892149},
-  {dep:"PERECEDEROS", items:4964, venta:13956228842.72, pzas:136356718, impresiones:187733822, inv:1481021},
-  {dep:"TECNOLOGIA", items:29122, venta:10347807486.52, pzas:5574013, impresiones:508689845, inv:1327200},
-  {dep:"TEMPORADA", items:29501, venta:7817132099.17, pzas:11408163, impresiones:460467120, inv:3186292},
-  {dep:"ROPA", items:57345, venta:4775929721.10, pzas:13547646, impresiones:331537113, inv:4670182},
-  {dep:"SIN DEPTO (NULL)", items:78473, venta:2226693877.45, pzas:154563400, impresiones:453227, inv:-4652318}
+  {dep:"SALUD Y BIENESTAR", items:15588, venta:40107714737.31, pzas:205238256, impresiones:797957864, inv:16615150},
+  {dep:"ABARROTES", items:5948, venta:39646349449.74, pzas:223546518, impresiones:634302553, inv:20779494},
+  {dep:"IMPULSO", items:9114, venta:27997396160.55, pzas:206231905, impresiones:574613760, inv:19427963},
+  {dep:"REFRIGERADOS, CONGELADOS Y BEBIDAS", items:2942, venta:21096128517.93, pzas:130430673, impresiones:428481413, inv:7110514},
+  {dep:"PERECEDEROS", items:4967, venta:14257112649.57, pzas:139343830, impresiones:193062321, inv:1523024},
+  {dep:"TECNOLOGIA", items:29148, venta:10569071468.91, pzas:5674053, impresiones:522630561, inv:1271256},
+  {dep:"TEMPORADA", items:29539, venta:8017211067.91, pzas:11700877, impresiones:475229668, inv:3405027},
+  {dep:"ROPA", items:57374, venta:4876460809.02, pzas:13832022, impresiones:342754373, inv:4784138},
+  {dep:"SIN DEPTO (NULL)", items:78497, venta:2279369271.61, pzas:157907530, impresiones:465602, inv:-4603124}
 ];
 
 const TOP20 = [
-  {item:"980021170", desc:"25 K AZUCAR ESTANDAR", dep:"ABARROTES", cat:"AZUCAR", venta:2615412632.37, pzas:6208402, imp:0, sem:"OK"},
-  {item:"15902", desc:"3.4KG MAYONESA LIMON", dep:"ABARROTES", cat:"ACEITES, GRANOS & ADEREZOS", venta:1154438899.04, pzas:4368420, imp:2870454, sem:"OK"},
-  {item:"954468", desc:"MM 32R 400H ULT SUA", dep:"SALUD Y BIENESTAR", cat:"PAPEL", venta:1123535822.73, pzas:3848396, imp:4648969, sem:"OK"},
-  {item:"980002446", desc:"REN IND PLUS REN IND", dep:"SIN DEPTO (NULL)", cat:"-", venta:1011872653.42, pzas:1069262, imp:0, sem:"OK"},
-  {item:"981000288", desc:"MM 12/1L LECHE DESLA", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:957370007.05, pzas:3435370, imp:3071826, sem:"OK"},
-  {item:"981017658", desc:"MM 45/500 ML AGUA PU", dep:"IMPULSO", cat:"AGUAS Y JUGOS", venta:883834337.51, pzas:7934462, imp:1254180, sem:"OK"},
-  {item:"113369", desc:"2/350G NESCAFE CAFE", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:859000622.77, pzas:2425734, imp:2907934, sem:"OK"},
-  {item:"263093", desc:"40R 180H SOFT COTTON", dep:"SALUD Y BIENESTAR", cat:"PAPEL", venta:798075791.73, pzas:4005764, imp:4284111, sem:"OK"},
-  {item:"981000289", desc:"MM 12/1L LECHE ENTE", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:706201306.53, pzas:2536491, imp:2677432, sem:"OK"},
-  {item:"980030166", desc:"MM 45/500 ML AGUA PU", dep:"IMPULSO", cat:"AGUAS Y JUGOS", venta:671224385.80, pzas:5871609, imp:1775490, sem:"OK"},
-  {item:"45955", desc:"MM POLLO ROSTIZADO", dep:"PERECEDEROS", cat:"CARNES", venta:645367350.51, pzas:6393239, imp:1069966, sem:"OOS"},
-  {item:"930962", desc:"UVA VERDE", dep:"PERECEDEROS", cat:"FRUTAS Y VERDURAS", venta:616972717.27, pzas:4295698, imp:1051189, sem:"OK"},
-  {item:"980007591", desc:"MM 25 FORMULA ORIG", dep:"SALUD Y BIENESTAR", cat:"MASCOTAS", venta:616870235.62, pzas:1182624, imp:1382031, sem:"OK"},
-  {item:"254784", desc:"30 PZ HUEVO BLANCO", dep:"REFRIGERADOS, CONGELADOS Y BEBIDAS", cat:"LACTEOS", venta:581583448.95, pzas:8505689, imp:1392357, sem:"OK"},
-  {item:"981013501", desc:"12/1L LALA DESLAC DE", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:552503446.72, pzas:1967801, imp:3109793, sem:"OK"},
-  {item:"389388", desc:"MM 300G CAFE REGULAR", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:523629817.89, pzas:2608667, imp:2929781, sem:"OK"},
-  {item:"34289", desc:"2.8L AXION LIMON", dep:"SALUD Y BIENESTAR", cat:"LIMPIEZA", venta:513748527.46, pzas:5264211, imp:2839995, sem:"OK"},
-  {item:"36455", desc:"CARNE MOLIDA 90/10", dep:"PERECEDEROS", cat:"CARNES", venta:511023671.87, pzas:2458898, imp:1047739, sem:"OOS"},
-  {item:"980037346", desc:"TT 48R 200H SUAVEL", dep:"SALUD Y BIENESTAR", cat:"PAPEL", venta:508616751.48, pzas:3955456, imp:3278619, sem:"OK"},
-  {item:"980002314", desc:"MM 1K CREMA AVELLANA", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:498218270.14, pzas:4748221, imp:1723854, sem:"OK"}
+  {item:"980021170", desc:"25 K AZUCAR ESTANDAR", dep:"ABARROTES", cat:"AZUCAR", venta:2664566293.14, pzas:6327899, imp:0, sem:"OK"},
+  {item:"15902", desc:"3.4KG MAYONESA LIMON", dep:"ABARROTES", cat:"ACEITES, GRANOS & ADEREZOS", venta:1162605426.84, pzas:4395775, imp:2955984, sem:"OK"},
+  {item:"954468", desc:"MM 32R 400H ULT SUA", dep:"SALUD Y BIENESTAR", cat:"PAPEL", venta:1144244732.44, pzas:3913789, imp:4780337, sem:"OK"},
+  {item:"980002446", desc:"REN IND PLUS REN IND", dep:"SIN DEPTO (NULL)", cat:"-", venta:1036590169.60, pzas:1102744, imp:0, sem:"OK"},
+  {item:"981000288", desc:"MM 12/1L LECHE DESLA", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:977162779.15, pzas:3507488, imp:3149884, sem:"OK"},
+  {item:"981017658", desc:"MM 45/500 ML AGUA PU", dep:"IMPULSO", cat:"AGUAS Y JUGOS", venta:899849460.53, pzas:8077926, imp:1281423, sem:"OK"},
+  {item:"113369", desc:"2/350G NESCAFE CAFE", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:868722896.23, pzas:2454041, imp:2938498, sem:"OK"},
+  {item:"263093", desc:"40R 180H SOFT COTTON", dep:"SALUD Y BIENESTAR", cat:"PAPEL", venta:814199999.33, pzas:4092723, imp:4423643, sem:"OK"},
+  {item:"981000289", desc:"MM 12/1L LECHE ENTE", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:721174831.56, pzas:2591613, imp:2744835, sem:"OK"},
+  {item:"980030166", desc:"MM 45/500 ML AGUA PU", dep:"IMPULSO", cat:"AGUAS Y JUGOS", venta:684839371.02, pzas:5991120, imp:1814862, sem:"OK"},
+  {item:"45955", desc:"MM POLLO ROSTIZADO", dep:"PERECEDEROS", cat:"CARNES", venta:658649631.13, pzas:6535045, imp:1095632, sem:"OOS"},
+  {item:"930962", desc:"UVA VERDE", dep:"PERECEDEROS", cat:"FRUTAS Y VERDURAS", venta:633092093.14, pzas:4420231, imp:1085901, sem:"OK"},
+  {item:"980007591", desc:"MM 25 FORMULA ORIG", dep:"SALUD Y BIENESTAR", cat:"MASCOTAS", venta:628683524.51, pzas:1205330, imp:1423287, sem:"OK"},
+  {item:"254784", desc:"30 PZ HUEVO BLANCO", dep:"REFRIGERADOS, CONGELADOS Y BEBIDAS", cat:"LACTEOS", venta:594700832.87, pzas:8717357, imp:1426399, sem:"OK"},
+  {item:"981013501", desc:"12/1L LALA DESLAC DE", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:566282767.85, pzas:2018866, imp:3180109, sem:"OK"},
+  {item:"389388", desc:"MM 300G CAFE REGULAR", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:532527202.12, pzas:2651751, imp:3012201, sem:"OK"},
+  {item:"34289", desc:"2.8L AXION LIMON", dep:"SALUD Y BIENESTAR", cat:"LIMPIEZA", venta:527163018.86, pzas:5416111, imp:2947501, sem:"OK"},
+  {item:"36455", desc:"MM CARNE MOLIDA 90/1", dep:"PERECEDEROS", cat:"CARNES", venta:523648275.86, pzas:2529181, imp:1083098, sem:"OOS"},
+  {item:"980037346", desc:"TT 48R 200H SUAVEL", dep:"SALUD Y BIENESTAR", cat:"PAPEL", venta:512147547.79, pzas:3981028, imp:3304474, sem:"OK"},
+  {item:"980002314", desc:"MM 1K CREMA AVELLANA", dep:"ABARROTES", cat:"ABARROTES SECOS", venta:506719330.66, pzas:4827450, imp:1759413, sem:"OK"}
 ];
 
 const fmtMoney = v => `$${v.toLocaleString('es-MX', {maximumFractionDigits:0})}`;
